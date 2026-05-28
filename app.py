@@ -2,6 +2,7 @@ from flask import Flask, render_template, Response, request, redirect, url_for, 
 import cv2
 import time
 import os
+import numpy as np
 from datetime import datetime, timedelta
 import psycopg2
 
@@ -11,15 +12,21 @@ app.secret_key = "cctv_secret_key"
 # =========================
 # DATABASE CONNECTION
 # =========================
-conn = psycopg2.connect(
-    host="turntable.proxy.rlwy.net",
-    port="43684",
-    user="postgres",
-    password="QGGzlutsqnoowNFWBnOvTgIDmWWWMJzg",
-    database="railway"
-)
+try:
+    conn = psycopg2.connect(
+        host="turntable.proxy.rlwy.net",
+        port="43684",
+        user="postgres",
+        password="QGGzlutsqnoowNFWBnOvTgIDmWWWMJzg",
+        database="railway"
+    )
 
-cursor = conn.cursor()
+    cursor = conn.cursor()
+
+    print("Database Connected!")
+
+except Exception as e:
+    print("Database Error:", e)
 
 # =========================
 # INIT DATABASE
@@ -50,8 +57,6 @@ def init_db():
 
 init_db()
 
-print("Database Connected!")
-
 # =========================
 # FOLDERS
 # =========================
@@ -67,14 +72,19 @@ PASSWORD = "1234"
 # CAMERA
 # =========================
 
-# Railway has NO physical webcam
-# So this prevents Railway from crashing
-
 camera = None
 
-# Local camera only when running on PC
+# Local camera only on your PC
 if os.environ.get("RAILWAY_ENVIRONMENT") is None:
-    camera = cv2.VideoCapture(0)
+
+    try:
+        camera = cv2.VideoCapture(0)
+
+        if not camera.isOpened():
+            camera = None
+
+    except:
+        camera = None
 
 previous_frame = None
 motion_active = False
@@ -112,6 +122,7 @@ def login():
     if request.method == 'POST':
 
         if is_ip_blocked(ip):
+
             return render_template(
                 "login.html",
                 error="Too many failed attempts. Try again later."
@@ -123,6 +134,7 @@ def login():
         if username == USERNAME and password == PASSWORD:
 
             session['logged_in'] = True
+
             return redirect(url_for('index'))
 
         # FAILED LOGIN
@@ -151,6 +163,7 @@ def login():
 def logout():
 
     session.clear()
+
     return redirect(url_for('login'))
 
 # =========================
@@ -160,6 +173,7 @@ def logout():
 def index():
 
     if not session.get('logged_in'):
+
         return redirect(url_for('login'))
 
     return render_template("index.html")
@@ -175,15 +189,18 @@ def generate_frames():
     global last_motion_time
     global stable_motion_state
 
-    # No camera available
+    # =========================
+    # NO CAMERA AVAILABLE
+    # =========================
     if camera is None:
+
         while True:
 
-            blank = 255 * np.ones(shape=[500, 800, 3], dtype=np.uint8)
+            blank = np.ones((500, 800, 3), dtype=np.uint8) * 255
 
             cv2.putText(
                 blank,
-                "No Camera Available On Railway",
+                "NO CAMERA AVAILABLE ON RAILWAY",
                 (120, 250),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
@@ -192,6 +209,7 @@ def generate_frames():
             )
 
             ret, buffer = cv2.imencode('.jpg', blank)
+
             frame_bytes = buffer.tobytes()
 
             yield (
@@ -203,6 +221,9 @@ def generate_frames():
 
             time.sleep(0.1)
 
+    # =========================
+    # CAMERA LOOP
+    # =========================
     while True:
 
         success, frame = camera.read()
@@ -211,16 +232,21 @@ def generate_frames():
             continue
 
         frame = cv2.flip(frame, 1)
+
         frame = cv2.resize(frame, (800, 500))
 
         display = frame.copy()
+
         clean = frame.copy()
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
         if previous_frame is None:
+
             previous_frame = gray
+
             continue
 
         diff = cv2.absdiff(previous_frame, gray)
@@ -270,11 +296,13 @@ def generate_frames():
         if motion:
 
             last_motion_time = now
+
             stable_motion_state = True
 
             if not motion_active and now - last_capture_time > 5:
 
                 motion_active = True
+
                 last_capture_time = now
 
                 filename = f"{int(now)}.jpg"
@@ -300,8 +328,11 @@ def generate_frames():
                 conn.commit()
 
         if now - last_motion_time > 2:
+
             stable_motion_state = False
+
         else:
+
             motion_active = False
 
         status = (
@@ -333,6 +364,7 @@ def generate_frames():
         )
 
         ret, buffer = cv2.imencode('.jpg', display)
+
         frame_bytes = buffer.tobytes()
 
         yield (
@@ -349,6 +381,7 @@ def generate_frames():
 def video():
 
     if not session.get('logged_in'):
+
         return redirect(url_for('login'))
 
     return Response(
@@ -402,6 +435,7 @@ def logs():
 def failed_logins_page():
 
     if not session.get('logged_in'):
+
         return redirect(url_for('login'))
 
     cursor.execute("""
@@ -427,6 +461,7 @@ def failed_logins_page():
 # =========================
 @app.route('/health')
 def health():
+
     return "CCTV System Running"
 
 # =========================
