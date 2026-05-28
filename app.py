@@ -22,7 +22,7 @@ conn = psycopg2.connect(
 cursor = conn.cursor()
 
 # =========================
-# INIT DATABASE (FIXED)
+# INIT DATABASE
 # =========================
 def init_db():
 
@@ -66,15 +66,21 @@ PASSWORD = "1234"
 # =========================
 # CAMERA
 # =========================
-camera = cv2.VideoCapture(0)
+
+# Railway has NO physical webcam
+# So this prevents Railway from crashing
+
+camera = None
+
+# Local camera only when running on PC
+if os.environ.get("RAILWAY_ENVIRONMENT") is None:
+    camera = cv2.VideoCapture(0)
 
 previous_frame = None
 motion_active = False
 last_capture_time = 0
 last_motion_time = 0
 stable_motion_state = False
-
-motion_logs = []
 
 # =========================
 # LOGIN CHECK
@@ -121,13 +127,20 @@ def login():
 
         # FAILED LOGIN
         cursor.execute("""
-            INSERT INTO failed_login_attempts (username, ip_address, user_agent)
+            INSERT INTO failed_login_attempts (
+                username,
+                ip_address,
+                user_agent
+            )
             VALUES (%s, %s, %s)
         """, (username, ip, user_agent))
 
         conn.commit()
 
-        return render_template("login.html", error=True)
+        return render_template(
+            "login.html",
+            error="Invalid username or password"
+        )
 
     return render_template("login.html")
 
@@ -136,6 +149,7 @@ def login():
 # =========================
 @app.route('/logout')
 def logout():
+
     session.clear()
     return redirect(url_for('login'))
 
@@ -161,6 +175,34 @@ def generate_frames():
     global last_motion_time
     global stable_motion_state
 
+    # No camera available
+    if camera is None:
+        while True:
+
+            blank = 255 * np.ones(shape=[500, 800, 3], dtype=np.uint8)
+
+            cv2.putText(
+                blank,
+                "No Camera Available On Railway",
+                (120, 250),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2
+            )
+
+            ret, buffer = cv2.imencode('.jpg', blank)
+            frame_bytes = buffer.tobytes()
+
+            yield (
+                b'--frame\r\n'
+                b'Content-Type: image/jpeg\r\n\r\n'
+                + frame_bytes +
+                b'\r\n'
+            )
+
+            time.sleep(0.1)
+
     while True:
 
         success, frame = camera.read()
@@ -182,25 +224,48 @@ def generate_frames():
             continue
 
         diff = cv2.absdiff(previous_frame, gray)
-        thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
+
+        thresh = cv2.threshold(
+            diff,
+            25,
+            255,
+            cv2.THRESH_BINARY
+        )[1]
+
         thresh = cv2.dilate(thresh, None, iterations=2)
 
-        contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv2.findContours(
+            thresh,
+            cv2.RETR_EXTERNAL,
+            cv2.CHAIN_APPROX_SIMPLE
+        )
 
         motion = False
 
         for c in contours:
+
             if cv2.contourArea(c) < 1000:
                 continue
 
             motion = True
+
             x, y, w, h = cv2.boundingRect(c)
-            cv2.rectangle(display, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+            cv2.rectangle(
+                display,
+                (x, y),
+                (x + w, y + h),
+                (0, 255, 0),
+                2
+            )
 
         previous_frame = gray
 
         now = time.time()
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+        timestamp = datetime.now().strftime(
+            "%Y-%m-%d %H:%M:%S"
+        )
 
         if motion:
 
@@ -213,14 +278,22 @@ def generate_frames():
                 last_capture_time = now
 
                 filename = f"{int(now)}.jpg"
-                path = os.path.join("static/logs", filename)
+
+                path = os.path.join(
+                    "static/logs",
+                    filename
+                )
 
                 cv2.imwrite(path, clean)
 
                 image_path = f"/static/logs/{filename}"
 
                 cursor.execute("""
-                    INSERT INTO detection_logs (person_detected, confidence, image_path)
+                    INSERT INTO detection_logs (
+                        person_detected,
+                        confidence,
+                        image_path
+                    )
                     VALUES (%s, %s, %s)
                 """, (True, 0.90, image_path))
 
@@ -231,20 +304,43 @@ def generate_frames():
         else:
             motion_active = False
 
-        status = "MOTION DETECTED" if stable_motion_state else "NO MOTION DETECTED"
+        status = (
+            "MOTION DETECTED"
+            if stable_motion_state
+            else "NO MOTION DETECTED"
+        )
 
-        cv2.putText(display, status, (20, 40),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.9,
-                    (0, 0, 255) if stable_motion_state else (255, 255, 255), 2)
+        cv2.putText(
+            display,
+            status,
+            (20, 40),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.9,
+            (0, 0, 255)
+            if stable_motion_state
+            else (255, 255, 255),
+            2
+        )
 
-        cv2.putText(display, timestamp, (20, 480),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        cv2.putText(
+            display,
+            timestamp,
+            (20, 480),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            0.7,
+            (0, 255, 0),
+            2
+        )
 
         ret, buffer = cv2.imencode('.jpg', display)
         frame_bytes = buffer.tobytes()
 
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+        yield (
+            b'--frame\r\n'
+            b'Content-Type: image/jpeg\r\n\r\n'
+            + frame_bytes +
+            b'\r\n'
+        )
 
 # =========================
 # VIDEO ROUTE
@@ -255,8 +351,10 @@ def video():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    return Response(generate_frames(),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+    return Response(
+        generate_frames(),
+        mimetype='multipart/x-mixed-replace; boundary=frame'
+    )
 
 # =========================
 # DETECTION LOGS API
@@ -264,26 +362,38 @@ def video():
 @app.route('/logs')
 def logs():
 
-    cursor.execute("""
-        SELECT person_detected, confidence, image_path, detected_at
-        FROM detection_logs
-        ORDER BY id DESC
-        LIMIT 20
-    """)
+    try:
 
-    rows = cursor.fetchall()
+        cursor.execute("""
+            SELECT
+                person_detected,
+                confidence,
+                image_path,
+                detected_at
+            FROM detection_logs
+            ORDER BY id DESC
+            LIMIT 20
+        """)
 
-    return jsonify({
-        "logs": [
-            {
-                "person_detected": r[0],
-                "confidence": r[1],
-                "image": r[2],
-                "time": r[3]
-            }
-            for r in rows
-        ]
-    })
+        rows = cursor.fetchall()
+
+        return jsonify({
+            "logs": [
+                {
+                    "person_detected": r[0],
+                    "confidence": float(r[1]),
+                    "image": r[2],
+                    "time": str(r[3])
+                }
+                for r in rows
+            ]
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "error": str(e)
+        })
 
 # =========================
 # FAILED LOGINS PAGE
@@ -295,7 +405,11 @@ def failed_logins_page():
         return redirect(url_for('login'))
 
     cursor.execute("""
-        SELECT username, attempted_at, ip_address, user_agent
+        SELECT
+            username,
+            attempted_at,
+            ip_address,
+            user_agent
         FROM failed_login_attempts
         ORDER BY id DESC
         LIMIT 50
@@ -303,10 +417,27 @@ def failed_logins_page():
 
     rows = cursor.fetchall()
 
-    return render_template("failed_logins.html", logs=rows)
+    return render_template(
+        "failed_logins.html",
+        logs=rows
+    )
+
+# =========================
+# HEALTH CHECK
+# =========================
+@app.route('/health')
+def health():
+    return "CCTV System Running"
 
 # =========================
 # RUN APP
 # =========================
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+    port = int(os.environ.get("PORT", 5000))
+
+    app.run(
+        host='0.0.0.0',
+        port=port,
+        debug=True
+    )
