@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCTRIX CCTV Dashboard</title>
+
+<style>
+
+/* =========================
+   BASE
+========================= */
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, sans-serif;
+    background: linear-gradient(135deg,#0f172a,#111827,#1e293b);
+    color:white;
+    min-height:100vh;
+}
+
+/* HEADER */
+.top-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px;
+}
+
+.dashboard-title{
+    font-size:32px;
+    font-weight:bold;
+}
+
+.logout-btn{
+    background:#00e5ff;
+    color:#000;
+    padding:10px 20px;
+    border-radius:10px;
+    text-decoration:none;
+    font-weight:bold;
+}
+
+/* =========================
+   DASHBOARD LAYOUT (FIXED)
+========================= */
+.dashboard{
+    display:flex;
+    gap:20px;
+    padding:20px;
+    align-items:stretch;
+    flex-wrap:nowrap;
+}
+
+/* LEFT COLUMN */
+.video-column{
+    flex:2;
+    min-width:650px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+/* CCTV */
+.video-container{
+    background:rgba(255,255,255,0.04);
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 25px rgba(0,0,0,0.4);
+    position:relative;
+}
+
+.video-container img{
+    width:100%;
+    display:block;
+}
+
+/* LIVE LABEL */
+.live-label{
+    position:absolute;
+    top:15px;
+    left:15px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(0,0,0,0.5);
+    padding:10px 15px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:bold;
+}
+
+.live-dot{
+    width:10px;
+    height:10px;
+    background:#00ff66;
+    border-radius:50%;
+    animation:blink 1s infinite;
+}
+
+@keyframes blink{
+    0%,100%{opacity:1;}
+    50%{opacity:0.3;}
+}
+
+/* =========================
+   LOG PANELS (FIXED LANDSCAPE)
+========================= */
+.logs-panel{
+    flex:1;
+    min-width:420px;
+    background:rgba(255,255,255,0.04);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.08);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+}
+
+/* HEADER */
+.logs-header{
+    padding:18px;
+    font-size:20px;
+    font-weight:bold;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+/* =========================
+   SCROLL AREA
+========================= */
+.logs-container{
+    padding:15px;
+    overflow-y:auto;
+    flex:1;
+    max-height:500px;
+}
+
+/* CUSTOM SCROLLBAR */
+.logs-container::-webkit-scrollbar{
+    width:8px;
+}
+
+.logs-container::-webkit-scrollbar-track{
+    background:#111827;
+    border-radius:10px;
+}
+
+.logs-container::-webkit-scrollbar-thumb{
+    background:#00e5ff;
+    border-radius:10px;
+}
+
+.logs-container::-webkit-scrollbar-thumb:hover{
+    background:#00bcd4;
+}
+
+/* LOG ITEM */
+.log-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:rgba(255,255,255,0.05);
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.log-image{
+    width:70px;
+    height:70px;
+    object-fit:cover;
+    border-radius:8px;
+}
+
+.log-content{
+    flex:1;
+}
+
+.log-title{
+    font-size:14px;
+    font-weight:bold;
+}
+
+.log-time{
+    font-size:12px;
+    color:#cbd5e1;
+}
+
+/* COLORS */
+.success{ color:#00ff66; }
+.failed{ color:#ff3b3b; }
+
+/* =========================
+   RESPONSIVE
+========================= */
+@media(max-width:1200px){
+    .dashboard{
+        flex-direction:column;
+        flex-wrap:wrap;
+    }
+
+    .video-column{
+        min-width:100%;
+    }
+
+    .logs-panel{
+        min-width:100%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="top-header">
+    <div class="dashboard-title">Network Monitor</div>
+    <a class="logout-btn" href="/logout">Logout</a>
+</div>
+
+<div class="dashboard">
+
+    <!-- LEFT -->
+    <div class="video-column">
+
+        <div class="video-container">
+            <div class="live-label">
+                <div class="live-dot"></div>
+                LIVE CCTV FEED
+            </div>
+
+            <img src="{{ url_for('video') }}">
+        </div>
+
+       
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="logs-panel">
+
+        <div class="logs-header">Motion Logs</div>
+        <div class="logs-container" id="motion-container"></div>
+
+    </div>
+
+</div>
+
+<script>
+
+async function loadMotionLogs(){
+    const res = await fetch('/logs');
+    const data = await res.json();
+
+    const container = document.getElementById('motion-container');
+    container.innerHTML = "";
+
+    data.logs.forEach(log => {
+        container.innerHTML += `
+        <div class="log-item">
+            <img class="log-image" src="${log.image}">
+            <div class="log-content">
+                <div class="log-title">Motion Detected</div>
+                <div class="log-time">${log.time}</div>
+            </div>
+        </div>`;
+    });
+}
+
+async function loadLoginLogs(){
+    const res = await fetch('/login_logs');
+    const data = await res.json();
+
+    const container = document.getElementById('login-container');
+    container.innerHTML = "";
+
+    data.logs.forEach(log => {
+
+        const color = log.type === "SUCCESS" ? "success" : "failed";
+
+        container.innerHTML += `
+        <div class="log-item">
+            <div class="log-content">
+                <div class="log-title ${color}">
+                    ${log.type} LOGIN
+                </div>
+                <div class="log-time">User: ${log.username}</div>
+                <div class="log-time">${log.time}</div>
+            </div>
+        </div>`;
+    });
+}
+
+setInterval(loadMotionLogs, 2000);
+setInterval(loadLoginLogs, 2000);
+
+loadMotionLogs();
+loadLoginLogs();
+
+</script>
+
+</body>
+</html>
