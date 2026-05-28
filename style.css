@@ -1,0 +1,210 @@
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:Arial, sans-serif;
+    background: linear-gradient(135deg,#0f172a,#111827,#1e293b);
+    color:white;
+    min-height:100vh;
+    overflow-x:hidden;
+}
+
+/* HEADER */
+.top-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px;
+    flex-wrap:wrap;
+    gap:10px;
+}
+
+.dashboard-title{
+    font-size:32px;
+    font-weight:bold;
+}
+
+.logout-btn{
+    background:#00e5ff;
+    color:#000;
+    text-decoration:none;
+    padding:12px 24px;
+    border-radius:10px;
+    font-weight:bold;
+    transition:0.3s;
+}
+
+.logout-btn:hover{
+    background:#7df9ff;
+    transform:scale(1.05);
+}
+
+/* DASHBOARD */
+.dashboard{
+    display:flex;
+    gap:20px;
+    padding:20px;
+    align-items:stretch;
+    flex-wrap:nowrap; /* 🔥 keeps landscape layout */
+}
+
+/* LEFT COLUMN */
+.video-column{
+    flex:2;              /* 🔥 camera takes more space */
+    min-width:600px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+/* CCTV */
+.video-container{
+    width:100%;
+    background:rgba(255,255,255,0.04);
+    border-radius:18px;
+    overflow:hidden;
+    border:1px solid rgba(255,255,255,0.08);
+    box-shadow:0 0 25px rgba(0,0,0,0.4);
+    position:relative;
+}
+
+.video-container img{
+    width:100%;
+    display:block;
+}
+
+/* LIVE LABEL */
+.live-label{
+    position:absolute;
+    top:15px;
+    left:15px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(0,0,0,0.5);
+    padding:10px 15px;
+    border-radius:10px;
+    font-size:14px;
+    font-weight:bold;
+}
+
+.live-dot{
+    width:10px;
+    height:10px;
+    background:#00ff66;
+    border-radius:50%;
+    animation:blink 1s infinite;
+}
+
+@keyframes blink{
+    0%,100%{opacity:1;}
+    50%{opacity:0.3;}
+}
+
+/* LOG PANELS (LANDSCAPE FIX) */
+.logs-panel{
+    flex:1;              /* 🔥 makes it stretch horizontally */
+    width:100%;
+    min-width:450px;     /* 🔥 gives landscape width */
+    background:rgba(255,255,255,0.04);
+    border-radius:18px;
+    border:1px solid rgba(255,255,255,0.08);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    box-shadow:0 0 25px rgba(0,0,0,0.4);
+}
+
+/* HEADER */
+.logs-header{
+    padding:18px;
+    font-size:20px;
+    font-weight:bold;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+}
+
+/* SCROLL AREA */
+.logs-container{
+    padding:15px;
+    overflow-y:auto;
+    flex:1;
+}
+
+/* LOG ITEM */
+.log-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:rgba(255,255,255,0.05);
+    padding:12px;
+    border-radius:12px;
+    margin-bottom:12px;
+    transition:0.3s;
+}
+
+.log-item:hover{
+    background:rgba(0,229,255,0.08);
+    transform:translateY(-2px);
+}
+
+.log-image{
+    width:70px;
+    height:70px;
+    object-fit:cover;
+    border-radius:10px;
+}
+
+.log-content{
+    flex:1;
+}
+
+.log-title{
+    font-size:14px;
+    font-weight:bold;
+    margin-bottom:5px;
+}
+
+.log-time{
+    color:#cbd5e1;
+    font-size:12px;
+}
+
+/* LOGIN COLORS */
+.success{
+    color:#00ff66;
+}
+
+.failed{
+    color:#ff3b3b;
+}
+
+/* RESPONSIVE */
+@media(max-width:1200px){
+    .dashboard{
+        flex-direction:column;
+        flex-wrap:wrap;
+    }
+
+    .video-column{
+        min-width:100%;
+    }
+
+    .logs-panel{
+        width:100%;
+        min-width:100%;
+    }
+}
+
+@media(max-width:768px){
+    .dashboard-title{
+        font-size:26px;
+    }
+
+    .top-header{
+        flex-direction:column;
+        gap:15px;
+    }
+}

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CCTV Login</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0f172a,#111827,#1e293b);
+}
+
+.phone{
+    width:100%;
+    max-width:500px;
+    padding:20px;
+}
+
+.screen{
+    width:100%;
+    background:rgba(255,255,255,0.05);
+    border-radius:20px;
+    padding:40px;
+    border:1px solid rgba(255,255,255,0.08);
+}
+
+/* LOGO CONTAINER (UPDATED) */
+.logo{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+/* YOUR IMAGE LOGO */
+.logo img{
+    width:200px;
+    height:200px;
+    object-fit:contain;
+    border-radius:15px;
+   
+}
+
+.title{
+    text-align:center;
+    color:white;
+    font-size:32px;
+    font-weight:bold;
+    margin-bottom:35px;
+}
+
+input, button{
+    width:100%;
+    padding:15px;
+    margin-bottom:18px;
+    border-radius:10px;
+    border:none;
+}
+
+input{
+    background:#1f2937;
+    color:white;
+}
+
+button{
+    background:#8b5cf6;
+    color:white;
+    font-size:18px;
+    font-weight:bold;
+    cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="phone">
+<div class="screen">
+
+    {% if error %}
+    <div style="background:red;color:white;padding:10px;border-radius:10px;margin-bottom:15px;">
+        ❌ INVALID CREDENTIALS
+    </div>
+    {% endif %}
+
+    <!-- LOGO (REPLACED SHIELD ICON) -->
+    <div class="logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="CCTRIX Logo">
+    </div>
+
+    
+
+    <form method="POST">
+        <input type="text" name="username" placeholder="Username" required>
+        <input type="password" name="password" placeholder="Password" required>
+        <button type="submit">LOGIN</button>
+    </form>
+
+</div>
+</div>
+
+</body>
+</html>
