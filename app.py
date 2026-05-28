@@ -26,34 +26,41 @@ try:
     print("Database Connected!")
 
 except Exception as e:
-    print("Database Error:", e)
+    print("DATABASE ERROR:", e)
 
 # =========================
 # INIT DATABASE
 # =========================
 def init_db():
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS detection_logs (
-        id SERIAL PRIMARY KEY,
-        person_detected BOOLEAN,
-        confidence FLOAT,
-        image_path TEXT,
-        detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    try:
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS failed_login_attempts (
-        id SERIAL PRIMARY KEY,
-        username TEXT,
-        attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        ip_address TEXT,
-        user_agent TEXT
-    )
-    """)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS detection_logs (
+            id SERIAL PRIMARY KEY,
+            person_detected BOOLEAN,
+            confidence FLOAT,
+            image_path TEXT,
+            detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
 
-    conn.commit()
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS failed_login_attempts (
+            id SERIAL PRIMARY KEY,
+            username TEXT,
+            attempted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            ip_address TEXT,
+            user_agent TEXT
+        )
+        """)
+
+        conn.commit()
+
+        print("Tables Ready!")
+
+    except Exception as e:
+        print("INIT DB ERROR:", e)
 
 init_db()
 
@@ -74,17 +81,12 @@ PASSWORD = "1234"
 
 camera = None
 
-# Local camera only on your PC
+# Railway has NO webcam
+# Webcam only works locally
+
 if os.environ.get("RAILWAY_ENVIRONMENT") is None:
 
-    try:
-        camera = cv2.VideoCapture(0)
-
-        if not camera.isOpened():
-            camera = None
-
-    except:
-        camera = None
+    camera = cv2.VideoCapture(0)
 
 previous_frame = None
 motion_active = False
@@ -97,21 +99,26 @@ stable_motion_state = False
 # =========================
 def is_ip_blocked(ip):
 
-    time_limit = datetime.now() - timedelta(minutes=10)
+    try:
 
-    cursor.execute("""
-        SELECT COUNT(*)
-        FROM failed_login_attempts
-        WHERE ip_address = %s
-        AND attempted_at >= %s
-    """, (ip, time_limit))
+        time_limit = datetime.now() - timedelta(minutes=10)
 
-    count = cursor.fetchone()[0]
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM failed_login_attempts
+            WHERE ip_address = %s
+            AND attempted_at >= %s
+        """, (ip, time_limit))
 
-    return count >= 5
+        count = cursor.fetchone()[0]
+
+        return count >= 5
+
+    except:
+        return False
 
 # =========================
-# LOGIN ROUTE
+# LOGIN
 # =========================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -125,7 +132,7 @@ def login():
 
             return render_template(
                 "login.html",
-                error="Too many failed attempts. Try again later."
+                error="Too many failed attempts."
             )
 
         username = request.form.get('username')
@@ -137,17 +144,21 @@ def login():
 
             return redirect(url_for('index'))
 
-        # FAILED LOGIN
-        cursor.execute("""
-            INSERT INTO failed_login_attempts (
-                username,
-                ip_address,
-                user_agent
-            )
-            VALUES (%s, %s, %s)
-        """, (username, ip, user_agent))
+        try:
 
-        conn.commit()
+            cursor.execute("""
+                INSERT INTO failed_login_attempts (
+                    username,
+                    ip_address,
+                    user_agent
+                )
+                VALUES (%s, %s, %s)
+            """, (username, ip, user_agent))
+
+            conn.commit()
+
+        except Exception as e:
+            print("LOGIN LOG ERROR:", e)
 
         return render_template(
             "login.html",
@@ -179,7 +190,7 @@ def index():
     return render_template("index.html")
 
 # =========================
-# CCTV STREAM
+# VIDEO STREAM
 # =========================
 def generate_frames():
 
@@ -189,9 +200,7 @@ def generate_frames():
     global last_motion_time
     global stable_motion_state
 
-    # =========================
-    # NO CAMERA AVAILABLE
-    # =========================
+    # Railway mode
     if camera is None:
 
         while True:
@@ -200,7 +209,7 @@ def generate_frames():
 
             cv2.putText(
                 blank,
-                "NO CAMERA AVAILABLE ON RAILWAY",
+                "Railway Cloud Mode - No Camera",
                 (120, 250),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
@@ -221,9 +230,6 @@ def generate_frames():
 
             time.sleep(0.1)
 
-    # =========================
-    # CAMERA LOOP
-    # =========================
     while True:
 
         success, frame = camera.read()
@@ -289,9 +295,7 @@ def generate_frames():
 
         now = time.time()
 
-        timestamp = datetime.now().strftime(
-            "%Y-%m-%d %H:%M:%S"
-        )
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         if motion:
 
@@ -316,23 +320,25 @@ def generate_frames():
 
                 image_path = f"/static/logs/{filename}"
 
-                cursor.execute("""
-                    INSERT INTO detection_logs (
-                        person_detected,
-                        confidence,
-                        image_path
-                    )
-                    VALUES (%s, %s, %s)
-                """, (True, 0.90, image_path))
+                try:
 
-                conn.commit()
+                    cursor.execute("""
+                        INSERT INTO detection_logs (
+                            person_detected,
+                            confidence,
+                            image_path
+                        )
+                        VALUES (%s, %s, %s)
+                    """, (True, 0.90, image_path))
+
+                    conn.commit()
+
+                except Exception as e:
+                    print("INSERT ERROR:", e)
 
         if now - last_motion_time > 2:
-
             stable_motion_state = False
-
         else:
-
             motion_active = False
 
         status = (
@@ -390,7 +396,7 @@ def video():
     )
 
 # =========================
-# DETECTION LOGS API
+# LOGS API
 # =========================
 @app.route('/logs')
 def logs():
@@ -429,7 +435,7 @@ def logs():
         })
 
 # =========================
-# FAILED LOGINS PAGE
+# FAILED LOGIN PAGE
 # =========================
 @app.route('/failed-logins-page')
 def failed_logins_page():
@@ -438,18 +444,23 @@ def failed_logins_page():
 
         return redirect(url_for('login'))
 
-    cursor.execute("""
-        SELECT
-            username,
-            attempted_at,
-            ip_address,
-            user_agent
-        FROM failed_login_attempts
-        ORDER BY id DESC
-        LIMIT 50
-    """)
+    try:
 
-    rows = cursor.fetchall()
+        cursor.execute("""
+            SELECT
+                username,
+                attempted_at,
+                ip_address,
+                user_agent
+            FROM failed_login_attempts
+            ORDER BY id DESC
+            LIMIT 50
+        """)
+
+        rows = cursor.fetchall()
+
+    except:
+        rows = []
 
     return render_template(
         "failed_logins.html",
@@ -473,6 +484,5 @@ if __name__ == '__main__':
 
     app.run(
         host='0.0.0.0',
-        port=port,
-        debug=True
+        port=port
     )
