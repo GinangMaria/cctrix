@@ -290,11 +290,11 @@ async function loadMotionLogs(){
 }
 
 async function loadLoginLogs(){
+    const container = document.getElementById('login-container');
+    if (!container) return;
+
     const res = await fetch('/login_logs');
     const data = await res.json();
-
-    const container = document.getElementById('login-container');
-    container.innerHTML = "";
 
     data.logs.forEach(log => {
 
