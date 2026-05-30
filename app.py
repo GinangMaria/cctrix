@@ -119,10 +119,12 @@ camera = None
 
 # Railway has NO webcam
 # Webcam only works locally
+# Set CAMERA_SOURCE=0 for webcam, or RTSP URL for IP camera
 
 if os.environ.get("RAILWAY_ENVIRONMENT") is None:
-
-    camera = cv2.VideoCapture(0)
+    source = os.environ.get("CAMERA_SOURCE", "0")
+    camera_index = int(source) if source.isdigit() else source
+    camera = cv2.VideoCapture(camera_index)
 
 previous_frame = None
 motion_active = False
