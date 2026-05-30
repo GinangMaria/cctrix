@@ -504,11 +504,8 @@ def logs():
 # FAILED LOGIN PAGE
 # =========================
 @app.route('/failed-logins-page')
+@require_admin
 def failed_logins_page():
-
-    if not session.get('logged_in'):
-
-        return redirect(url_for('login'))
 
     try:
 
@@ -532,6 +529,38 @@ def failed_logins_page():
         "failed_logins.html",
         logs=rows
     )
+
+# =========================
+# AUTH LOGS API
+# =========================
+@app.route('/login_logs')
+def login_logs():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    if session.get('role') != 'admin':
+        return jsonify({"logs": []})
+    try:
+        cursor.execute("""
+            SELECT username, action, reason, ip_address, timestamp
+            FROM auth_logs
+            ORDER BY id DESC
+            LIMIT 50
+        """)
+        rows = cursor.fetchall()
+        return jsonify({
+            "logs": [
+                {
+                    "username": r[0],
+                    "type": r[1],
+                    "reason": r[2],
+                    "ip": r[3],
+                    "time": str(r[4])
+                }
+                for r in rows
+            ]
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 # =========================
 # HEALTH CHECK
