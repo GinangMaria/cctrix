@@ -621,6 +621,79 @@ def stats():
         return jsonify({"error": str(e), "motion_today": 0, "failed_logins_today": 0, "auth_events_today": 0})
 
 # =========================
+# EXPORT LOGS AS CSV (admin)
+# =========================
+@app.route('/export/motion')
+@require_admin
+def export_motion():
+    from io import StringIO
+    import csv as csv_mod
+    output = StringIO()
+    writer = csv_mod.writer(output)
+    writer.writerow(['ID', 'Person Detected', 'Confidence', 'Image Path', 'Detected At'])
+    try:
+        cursor.execute("SELECT id, person_detected, confidence, image_path, detected_at FROM detection_logs ORDER BY id DESC")
+        for row in cursor.fetchall():
+            writer.writerow(row)
+    except Exception as e:
+        writer.writerow(['Error', str(e)])
+    from flask import make_response
+    resp = make_response(output.getvalue())
+    resp.headers['Content-Type'] = 'text/csv'
+    resp.headers['Content-Disposition'] = 'attachment; filename=motion_logs.csv'
+    return resp
+
+@app.route('/export/auth')
+@require_admin
+def export_auth():
+    from io import StringIO
+    import csv as csv_mod
+    output = StringIO()
+    writer = csv_mod.writer(output)
+    writer.writerow(['ID', 'Username', 'Action', 'Reason', 'IP Address', 'User Agent', 'Timestamp'])
+    try:
+        cursor.execute("SELECT id, username, action, reason, ip_address, user_agent, timestamp FROM auth_logs ORDER BY id DESC")
+        for row in cursor.fetchall():
+            writer.writerow(row)
+    except Exception as e:
+        writer.writerow(['Error', str(e)])
+    from flask import make_response
+    resp = make_response(output.getvalue())
+    resp.headers['Content-Type'] = 'text/csv'
+    resp.headers['Content-Disposition'] = 'attachment; filename=auth_logs.csv'
+    return resp
+
+# =========================
+# SYSTEM STATUS (admin)
+# =========================
+@app.route('/system-status')
+@require_admin
+def system_status():
+    db_ok = False
+    try:
+        cursor.execute("SELECT 1")
+        db_ok = True
+    except Exception:
+        pass
+    cam_ok = camera is not None
+    try:
+        cursor.execute("SELECT COUNT(*) FROM detection_logs")
+        total_motion = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM auth_logs")
+        total_auth = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM users")
+        total_users = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM failed_login_attempts")
+        total_failed = cursor.fetchone()[0]
+    except Exception:
+        total_motion = total_auth = total_users = total_failed = 0
+    return render_template('system_status.html',
+        db_ok=db_ok, cam_ok=cam_ok,
+        total_motion=total_motion, total_auth=total_auth,
+        total_users=total_users, total_failed=total_failed,
+        role=session.get('role'))
+
+# =========================
 # HEALTH CHECK
 # =========================
 @app.route('/health')
