@@ -565,12 +565,31 @@ def login_logs():
         return jsonify({"error": str(e)})
 
 # =========================
+# STATS API
+# =========================
+@app.route('/stats')
+def stats():
+    if not session.get('logged_in'):
+        return jsonify({"error": "unauthorized"})
+    try:
+        from datetime import date
+        today = date.today()
+        cursor.execute("SELECT COUNT(*) FROM detection_logs WHERE detected_at::date = %s", (today,))
+        motion_today = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM failed_login_attempts WHERE attempted_at::date = %s", (today,))
+        failed_today = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM auth_logs WHERE timestamp::date = %s", (today,))
+        auth_today = cursor.fetchone()[0]
+        return jsonify({"motion_today": motion_today, "failed_logins_today": failed_today, "auth_events_today": auth_today})
+    except Exception as e:
+        return jsonify({"error": str(e), "motion_today": 0, "failed_logins_today": 0, "auth_events_today": 0})
+
+# =========================
 # HEALTH CHECK
 # =========================
 @app.route('/health')
 def health():
-
-    return "CCTV System Running"
+    return jsonify({"status": "ok"})
 
 # =========================
 # RUN APP

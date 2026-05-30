@@ -1,325 +1,1045 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CCTRIX CCTV Dashboard</title>
-
+<title>CCTRIX — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-
-/* =========================
-   BASE
-========================= */
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+/* ============================
+   DESIGN TOKENS
+============================ */
+:root{
+  --bg:#020617;
+  --surface:#0F172A;
+  --surface2:#1E293B;
+  --surface3:#263148;
+  --border:rgba(255,255,255,.07);
+  --border-solid:#334155;
+  --accent:#22C55E;
+  --accent-dim:rgba(34,197,94,.1);
+  --accent-glow:rgba(34,197,94,.2);
+  --red:#EF4444;
+  --red-dim:rgba(239,68,68,.1);
+  --amber:#F59E0B;
+  --amber-dim:rgba(245,158,11,.1);
+  --blue:#3B82F6;
+  --blue-dim:rgba(59,130,246,.1);
+  --text:#F8FAFC;
+  --text-2:#CBD5E1;
+  --muted:#64748B;
+  --radius-sm:8px;
+  --radius:12px;
+  --radius-lg:16px;
+  --header-h:60px;
+  --transition:150ms cubic-bezier(.16,1,.3,1);
 }
-
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;-webkit-text-size-adjust:100%}
 body{
-    font-family:Arial, sans-serif;
-    background: linear-gradient(135deg,#0f172a,#111827,#1e293b);
-    color:white;
-    min-height:100vh;
+  font-family:'Fira Sans',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100dvh;
+  overflow-x:hidden;
 }
 
-/* HEADER */
-.top-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:20px;
+/* ============================
+   HEADER
+============================ */
+.header{
+  position:sticky;top:0;z-index:100;
+  height:var(--header-h);
+  background:rgba(2,6,23,.85);
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:0 16px;
+  gap:12px;
 }
 
-.dashboard-title{
-    font-size:32px;
-    font-weight:bold;
+.header-logo{
+  display:flex;align-items:center;gap:9px;
+  text-decoration:none;
+  flex-shrink:0;
 }
+.header-logo-icon{
+  width:34px;height:34px;
+  background:var(--accent-dim);
+  border:1px solid rgba(34,197,94,.25);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 0 12px rgba(34,197,94,.1);
+}
+.header-logo-icon svg{color:var(--accent)}
+.header-logo-name{
+  font-family:'Fira Code',monospace;
+  font-size:18px;font-weight:700;
+  color:var(--text);letter-spacing:2px;
+}
+.header-logo-name span{color:var(--accent)}
+
+.header-spacer{flex:1}
+
+.header-clock{
+  font-family:'Fira Code',monospace;
+  font-size:13px;color:var(--muted);
+  display:none;
+}
+@media(min-width:480px){.header-clock{display:block}}
+
+.header-user{
+  display:flex;align-items:center;gap:8px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:100px;
+  padding:5px 12px 5px 8px;
+  cursor:default;
+}
+.user-avatar{
+  width:26px;height:26px;
+  background:var(--accent-dim);
+  border:1px solid rgba(34,197,94,.25);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+}
+.user-avatar svg{color:var(--accent)}
+.user-name{font-size:13px;font-weight:500;color:var(--text-2);display:none}
+@media(min-width:480px){.user-name{display:block}}
+.user-role{
+  font-size:10px;font-weight:700;
+  font-family:'Fira Code',monospace;
+  letter-spacing:.5px;
+  padding:2px 7px;
+  border-radius:100px;
+}
+.user-role.admin{background:rgba(245,158,11,.15);color:#FCD34D}
+.user-role.viewer{background:var(--blue-dim);color:#93C5FD}
 
 .logout-btn{
-    background:#00e5ff;
-    color:#000;
-    padding:10px 20px;
-    border-radius:10px;
-    text-decoration:none;
-    font-weight:bold;
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:var(--muted);
+  font-family:'Fira Sans',sans-serif;
+  font-size:13px;font-weight:500;
+  padding:8px 12px;
+  cursor:pointer;
+  text-decoration:none;
+  transition:color var(--transition),background var(--transition),border-color var(--transition);
+  white-space:nowrap;
+  min-height:36px;
+}
+.logout-btn:hover{color:var(--text);background:var(--surface3);border-color:var(--border-solid)}
+.logout-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.logout-icon-only{padding:8px}
+.logout-label{display:none}
+@media(min-width:640px){.logout-label{display:block}}
+
+/* ============================
+   STATS BAR
+============================ */
+.stats-bar{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  padding:12px 16px;
+}
+@media(min-width:640px){
+  .stats-bar{grid-template-columns:repeat(4,1fr)}
+}
+@media(min-width:1024px){
+  .stats-bar{padding:14px 20px;gap:12px}
 }
 
-/* =========================
-   DASHBOARD LAYOUT (FIXED)
-========================= */
-.dashboard{
-    display:flex;
-    gap:20px;
-    padding:20px;
-    align-items:stretch;
-    flex-wrap:nowrap;
+.stat-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  display:flex;align-items:center;gap:12px;
+  animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+}
+.stat-card:nth-child(2){animation-delay:.05s}
+.stat-card:nth-child(3){animation-delay:.1s}
+.stat-card:nth-child(4){animation-delay:.15s}
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(10px)}
+  to{opacity:1;transform:translateY(0)}
+}
+.stat-icon{
+  width:36px;height:36px;flex-shrink:0;
+  border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+}
+.stat-icon.green{background:var(--accent-dim);color:var(--accent)}
+.stat-icon.red{background:var(--red-dim);color:var(--red)}
+.stat-icon.amber{background:var(--amber-dim);color:var(--amber)}
+.stat-icon.blue{background:var(--blue-dim);color:var(--blue)}
+.stat-body{}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500;letter-spacing:.3px}
+.stat-value{
+  font-family:'Fira Code',monospace;
+  font-size:20px;font-weight:700;
+  color:var(--text);
+  line-height:1.2;
+}
+.stat-value.live{color:var(--accent)}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* ============================
+   MAIN LAYOUT
+============================ */
+.main{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:0 16px 80px;
+}
+@media(min-width:900px){
+  .main{
+    flex-direction:row;
+    align-items:flex-start;
+    padding:0 20px 20px;
+  }
+}
+@media(min-width:1200px){
+  .main{padding:0 24px 24px}
 }
 
-/* LEFT COLUMN */
-.video-column{
-    flex:2;
-    min-width:650px;
-    display:flex;
-    flex-direction:column;
-    gap:20px;
+/* ============================
+   CAMERA SECTION
+============================ */
+.camera-section{
+  width:100%;
+  display:flex;flex-direction:column;gap:10px;
+}
+@media(min-width:900px){
+  .camera-section{flex:2;min-width:0}
 }
 
-/* CCTV */
-.video-container{
-    background:rgba(255,255,255,0.04);
-    border-radius:18px;
-    overflow:hidden;
-    border:1px solid rgba(255,255,255,0.08);
-    box-shadow:0 0 25px rgba(0,0,0,0.4);
-    position:relative;
+.camera-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  position:relative;
 }
 
-.video-container img{
-    width:100%;
-    display:block;
+/* Motion alert banner */
+.motion-alert{
+  position:absolute;top:0;left:0;right:0;z-index:10;
+  background:rgba(239,68,68,.9);
+  backdrop-filter:blur(4px);
+  padding:10px 16px;
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;font-weight:700;letter-spacing:.5px;
+  color:#fff;
+  transform:translateY(-100%);
+  transition:transform .25s cubic-bezier(.16,1,.3,1);
+}
+.motion-alert.active{transform:translateY(0)}
+.motion-alert-dot{
+  width:8px;height:8px;
+  background:#fff;border-radius:50%;
+  animation:blink 1s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.camera-feed-wrap{
+  position:relative;
+  aspect-ratio:16/9;
+  background:#000;
+  overflow:hidden;
+}
+.camera-feed{
+  width:100%;height:100%;
+  object-fit:cover;
+  display:block;
 }
 
-/* LIVE LABEL */
-.live-label{
-    position:absolute;
-    top:15px;
-    left:15px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    background:rgba(0,0,0,0.5);
-    padding:10px 15px;
-    border-radius:10px;
-    font-size:14px;
-    font-weight:bold;
+/* Live badge */
+.live-badge{
+  position:absolute;top:12px;left:12px;
+  display:flex;align-items:center;gap:7px;
+  background:rgba(0,0,0,.6);
+  backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:100px;
+  padding:5px 10px;
+  font-size:11px;font-weight:700;
+  font-family:'Fira Code',monospace;
+  color:var(--text);
+  letter-spacing:.5px;
 }
-
 .live-dot{
-    width:10px;
-    height:10px;
-    background:#00ff66;
-    border-radius:50%;
-    animation:blink 1s infinite;
+  width:7px;height:7px;
+  background:var(--accent);
+  border-radius:50%;
+  animation:blink 1.5s ease-in-out infinite;
+  box-shadow:0 0 6px var(--accent);
 }
 
-@keyframes blink{
-    0%,100%{opacity:1;}
-    50%{opacity:0.3;}
+/* Timestamp overlay */
+.cam-timestamp{
+  position:absolute;bottom:10px;left:12px;
+  font-family:'Fira Code',monospace;
+  font-size:11px;color:rgba(255,255,255,.6);
+  background:rgba(0,0,0,.4);
+  padding:3px 8px;border-radius:6px;
 }
 
-/* =========================
-   LOG PANELS (FIXED LANDSCAPE)
-========================= */
-.logs-panel{
-    flex:1;
-    min-width:420px;
-    background:rgba(255,255,255,0.04);
-    border-radius:18px;
-    border:1px solid rgba(255,255,255,0.08);
-    overflow:hidden;
-    display:flex;
-    flex-direction:column;
+/* Camera footer */
+.camera-footer{
+  padding:12px 16px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-top:1px solid var(--border);
+  font-size:12px;color:var(--muted);
+  gap:12px;flex-wrap:wrap;
+}
+.cam-status{display:flex;align-items:center;gap:6px}
+.cam-status-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--accent);
+  box-shadow:0 0 6px var(--accent);
+}
+.cam-refresh{
+  display:flex;align-items:center;gap:6px;
+  font-size:11px;font-family:'Fira Code',monospace;
+  color:var(--muted);
+}
+.refresh-spin{
+  width:12px;height:12px;
+  border:2px solid var(--border-solid);
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:spin 1s linear infinite;
+  opacity:0;
+  transition:opacity .2s;
+}
+.refresh-spin.active{opacity:1}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ============================
+   LOGS SECTION
+============================ */
+.logs-section{
+  width:100%;
+  display:flex;flex-direction:column;
+  min-height:0;
+}
+@media(min-width:900px){
+  .logs-section{flex:1.2;min-width:0;max-height:calc(100dvh - var(--header-h) - 130px);position:sticky;top:calc(var(--header-h) + 14px)}
 }
 
-/* HEADER */
-.logs-header{
-    padding:18px;
-    font-size:20px;
-    font-weight:bold;
-    border-bottom:1px solid rgba(255,255,255,0.08);
+.logs-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-lg);
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  height:100%;
 }
 
-/* =========================
-   SCROLL AREA
-========================= */
-.logs-container{
-    padding:15px;
-    overflow-y:auto;
-    flex:1;
-    max-height:500px;
+/* Tab bar */
+.tab-bar{
+  display:flex;
+  border-bottom:1px solid var(--border);
+  overflow-x:auto;
+  scrollbar-width:none;
+  flex-shrink:0;
 }
-
-/* CUSTOM SCROLLBAR */
-.logs-container::-webkit-scrollbar{
-    width:8px;
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-btn{
+  flex:1;
+  padding:13px 16px;
+  font-family:'Fira Sans',sans-serif;
+  font-size:13px;font-weight:600;
+  color:var(--muted);
+  background:none;border:none;cursor:pointer;
+  border-bottom:2px solid transparent;
+  transition:color var(--transition),border-color var(--transition),background var(--transition);
+  white-space:nowrap;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  min-height:44px;
+  position:relative;
 }
-
-.logs-container::-webkit-scrollbar-track{
-    background:#111827;
-    border-radius:10px;
+.tab-btn:hover{color:var(--text-2);background:rgba(255,255,255,.03)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-btn:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.tab-count{
+  font-family:'Fira Code',monospace;
+  font-size:10px;font-weight:700;
+  background:var(--accent-dim);
+  color:var(--accent);
+  border-radius:100px;
+  padding:1px 6px;
+  min-width:18px;text-align:center;
 }
+.tab-count.red-count{background:var(--red-dim);color:var(--red)}
 
-.logs-container::-webkit-scrollbar-thumb{
-    background:#00e5ff;
-    border-radius:10px;
+/* Tab panels */
+.tab-panels{position:relative;flex:1;min-height:200px;overflow:hidden}
+.tab-panel{
+  position:absolute;inset:0;
+  overflow-y:auto;
+  padding:12px;
+  opacity:0;pointer-events:none;
+  transform:translateX(12px);
+  transition:opacity .2s,transform .2s;
+  scrollbar-width:thin;
+  scrollbar-color:var(--border-solid) transparent;
 }
+.tab-panel::-webkit-scrollbar{width:5px}
+.tab-panel::-webkit-scrollbar-thumb{background:var(--border-solid);border-radius:4px}
+.tab-panel.active{opacity:1;pointer-events:auto;transform:translateX(0)}
 
-.logs-container::-webkit-scrollbar-thumb:hover{
-    background:#00bcd4;
-}
-
-/* LOG ITEM */
+/* ============================
+   LOG ITEMS
+============================ */
 .log-item{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    background:rgba(255,255,255,0.05);
-    padding:10px;
-    border-radius:10px;
-    margin-bottom:10px;
+  display:flex;align-items:flex-start;gap:10px;
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:10px;
+  margin-bottom:8px;
+  transition:background var(--transition),border-color var(--transition);
+  cursor:default;
 }
+.log-item:hover{background:rgba(255,255,255,.05);border-color:var(--border-solid)}
+.log-item:last-child{margin-bottom:0}
 
-.log-image{
-    width:70px;
-    height:70px;
-    object-fit:cover;
-    border-radius:8px;
+.log-thumb{
+  width:60px;height:60px;
+  object-fit:cover;
+  border-radius:7px;
+  background:var(--surface2);
+  flex-shrink:0;
+  border:1px solid var(--border);
 }
-
-.log-content{
-    flex:1;
-}
-
+.log-body{flex:1;min-width:0}
 .log-title{
-    font-size:14px;
-    font-weight:bold;
+  font-size:13px;font-weight:600;
+  color:var(--text);
+  display:flex;align-items:center;gap:6px;
+  flex-wrap:wrap;
 }
-
 .log-time{
-    font-size:12px;
-    color:#cbd5e1;
+  font-size:11px;color:var(--muted);
+  font-family:'Fira Code',monospace;
+  margin-top:3px;
+}
+.log-ip{
+  font-size:11px;color:var(--muted);
+  font-family:'Fira Code',monospace;
+  margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:700;
+  font-family:'Fira Code',monospace;
+  letter-spacing:.3px;
+  padding:2px 7px;
+  border-radius:100px;
+}
+.badge.success{background:var(--accent-dim);color:var(--accent)}
+.badge.failed{background:var(--red-dim);color:#FCA5A5}
+.badge.logout{background:rgba(100,116,139,.15);color:var(--muted)}
+.badge.motion{background:var(--amber-dim);color:var(--amber)}
+
+/* Log icon (for auth logs without image) */
+.log-icon{
+  width:36px;height:36px;flex-shrink:0;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.log-icon.success{background:var(--accent-dim);color:var(--accent)}
+.log-icon.failed{background:var(--red-dim);color:var(--red)}
+.log-icon.logout{background:rgba(100,116,139,.12);color:var(--muted)}
+
+/* Empty state */
+.empty-state{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;
+  gap:12px;color:var(--muted);
+}
+.empty-state svg{color:var(--border-solid)}
+.empty-state p{font-size:13px}
+
+/* ============================
+   MOBILE BOTTOM NAV
+============================ */
+.mobile-fab-area{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;
+  background:rgba(15,23,42,.9);
+  backdrop-filter:blur(20px);
+  border:1px solid var(--border);
+  border-radius:100px;
+  padding:6px;
+  z-index:50;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+@media(min-width:900px){.mobile-fab-area{display:none}}
+.fab-btn{
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 16px;
+  border-radius:100px;
+  font-size:10px;font-weight:600;
+  color:var(--muted);
+  background:none;border:none;cursor:pointer;
+  transition:color var(--transition),background var(--transition);
+  letter-spacing:.3px;
+  min-width:64px;
+}
+.fab-btn:hover{color:var(--text)}
+.fab-btn.active{background:var(--accent-dim);color:var(--accent)}
+.fab-btn svg{width:18px;height:18px}
+.fab-count{
+  position:absolute;top:-4px;right:-4px;
+  background:var(--red);
+  color:#fff;
+  font-size:9px;font-weight:700;
+  border-radius:100px;
+  padding:1px 4px;
+  font-family:'Fira Code',monospace;
+  min-width:14px;text-align:center;
 }
 
-/* COLORS */
-.success{ color:#00ff66; }
-.failed{ color:#ff3b3b; }
-
-/* =========================
-   RESPONSIVE
-========================= */
-@media(max-width:1200px){
-    .dashboard{
-        flex-direction:column;
-        flex-wrap:wrap;
-    }
-
-    .video-column{
-        min-width:100%;
-    }
-
-    .logs-panel{
-        min-width:100%;
-    }
+/* ============================
+   TOAST NOTIFICATIONS
+============================ */
+.toast-wrap{
+  position:fixed;top:70px;right:16px;
+  display:flex;flex-direction:column;gap:8px;
+  z-index:200;
+  max-width:calc(100vw - 32px);
+  width:340px;
 }
+.toast{
+  background:var(--surface2);
+  border:1px solid var(--border-solid);
+  border-radius:var(--radius);
+  padding:12px 14px;
+  display:flex;align-items:flex-start;gap:10px;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+  animation:toastIn .3s cubic-bezier(.16,1,.3,1) both;
+}
+.toast.removing{animation:toastOut .25s ease-in forwards}
+@keyframes toastIn{
+  from{opacity:0;transform:translateX(20px)}
+  to{opacity:1;transform:translateX(0)}
+}
+@keyframes toastOut{
+  to{opacity:0;transform:translateX(20px)}
+}
+.toast-icon{
+  width:32px;height:32px;flex-shrink:0;
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.toast-icon.motion{background:var(--amber-dim);color:var(--amber)}
+.toast-icon.auth{background:var(--accent-dim);color:var(--accent)}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-size:13px;font-weight:600;color:var(--text)}
+.toast-msg{font-size:12px;color:var(--muted);margin-top:2px}
+.toast-close{
+  background:none;border:none;
+  color:var(--muted);cursor:pointer;
+  padding:2px;border-radius:4px;
+  transition:color var(--transition);
+  flex-shrink:0;
+}
+.toast-close:hover{color:var(--text)}
 
+/* ============================
+   RESPONSIVE TWEAKS
+============================ */
+@media(max-width:899px){
+  /* on mobile, logs section is below camera, full-height tab panels */
+  .logs-section{flex:none}
+  .logs-card{border-radius:var(--radius-lg)}
+  .tab-panels{min-height:300px;position:relative;height:360px}
+  .tab-panel{position:absolute}
+}
 </style>
 </head>
-
 <body>
 
-<div class="top-header">
-    <div class="dashboard-title">Network Monitor</div>
-    <div style="display:flex;gap:10px;align-items:center;">
-        {% if role == 'admin' %}
-        <a class="logout-btn" href="/failed-logins-page"
-           style="background:#ff4444;">Failed Logins</a>
-        {% endif %}
-        <a class="logout-btn" href="/logout">Logout</a>
+<!-- HEADER -->
+<header class="header">
+  <a href="/" class="header-logo" aria-label="CCTRIX Home">
+    <div class="header-logo-icon" aria-hidden="true">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/>
+      </svg>
     </div>
+    <span class="header-logo-name">CCT<span>RIX</span></span>
+  </a>
+
+  <div class="header-spacer"></div>
+
+  <div class="header-clock" id="header-clock" aria-live="polite" aria-atomic="true"></div>
+
+  <div class="header-user">
+    <div class="user-avatar" aria-hidden="true">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
+      </svg>
+    </div>
+    <span class="user-name">{{ session.get('username', 'User') }}</span>
+    <span class="user-role {{ role or 'viewer' }}">{{ (role or 'viewer') | upper }}</span>
+  </div>
+
+  <a href="/logout" class="logout-btn" aria-label="Logout">
+    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/>
+    </svg>
+    <span class="logout-label">Logout</span>
+  </a>
+</header>
+
+<!-- STATS BAR -->
+<div class="stats-bar" role="region" aria-label="System statistics">
+  <div class="stat-card">
+    <div class="stat-icon green" aria-hidden="true">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-label">Camera</div>
+      <div class="stat-value live">LIVE</div>
+      <div class="stat-sub">Stream active</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon amber" aria-hidden="true">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-label">Motion Today</div>
+      <div class="stat-value" id="stat-motion">—</div>
+      <div class="stat-sub">detections</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon red" aria-hidden="true">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-label">Failed Logins</div>
+      <div class="stat-value" id="stat-failed">—</div>
+      <div class="stat-sub">today</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon blue" aria-hidden="true">
+      <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
+      </svg>
+    </div>
+    <div class="stat-body">
+      <div class="stat-label">Auth Events</div>
+      <div class="stat-value" id="stat-auth">—</div>
+      <div class="stat-sub">today</div>
+    </div>
+  </div>
 </div>
 
-<div class="dashboard">
+<!-- MAIN CONTENT -->
+<main class="main" role="main">
 
-    <!-- LEFT -->
-    <div class="video-column">
+  <!-- CAMERA SECTION -->
+  <section class="camera-section" aria-label="Live camera feed">
+    <div class="camera-card">
+      <div class="motion-alert" id="motion-alert" role="alert" aria-live="assertive">
+        <span class="motion-alert-dot" aria-hidden="true"></span>
+        MOTION DETECTED
+        <span id="motion-alert-time" style="margin-left:auto;font-size:11px;opacity:.8"></span>
+      </div>
 
-        <div class="video-container">
-            <div class="live-label">
-                <div class="live-dot"></div>
-                LIVE CCTV FEED
-            </div>
+      <div class="camera-feed-wrap">
+        <div class="live-badge" aria-label="Live stream">
+          <span class="live-dot" aria-hidden="true"></span>LIVE
+        </div>
+        <img src="{{ url_for('video') }}" class="camera-feed" alt="Live CCTV camera feed">
+        <div class="cam-timestamp" id="cam-timestamp" aria-label="Current time" aria-live="polite"></div>
+      </div>
 
-            <img src="{{ url_for('video') }}">
+      <div class="camera-footer">
+        <span class="cam-status">
+          <span class="cam-status-dot" aria-hidden="true"></span>
+          <span style="font-size:12px">Camera Online</span>
+        </span>
+        <span class="cam-refresh">
+          <span class="refresh-spin" id="refresh-spin" aria-hidden="true"></span>
+          Polling logs every 2s
+        </span>
+        <span style="font-size:12px;font-family:'Fira Code',monospace;color:var(--muted)">
+          {{ session.get('username','') }} · CCTRIX v2
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- LOGS SECTION -->
+  <section class="logs-section" aria-label="Activity logs">
+    <div class="logs-card">
+
+      <div class="tab-bar" role="tablist">
+        <button class="tab-btn active" role="tab" aria-selected="true" aria-controls="panel-motion" id="tab-motion-btn" onclick="switchTab('motion', this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+          </svg>
+          Motion
+          <span class="tab-count" id="motion-count">0</span>
+        </button>
+
+        {% if role == 'admin' %}
+        <button class="tab-btn" role="tab" aria-selected="false" aria-controls="panel-auth" id="tab-auth-btn" onclick="switchTab('auth', this)">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
+          </svg>
+          Auth Logs
+          <span class="tab-count" id="auth-count">0</span>
+        </button>
+        <a href="/failed-logins-page" class="tab-btn" style="text-decoration:none;flex:none;padding:13px 14px">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+          </svg>
+          Blocked
+          <span class="tab-count red-count" id="failed-count">—</span>
+        </a>
+        {% endif %}
+      </div>
+
+      <div class="tab-panels">
+        <!-- Motion Tab -->
+        <div class="tab-panel active" id="panel-motion" role="tabpanel" aria-labelledby="tab-motion-btn">
+          <div id="motion-container"></div>
         </div>
 
-       
+        <!-- Auth Tab (admin) -->
+        {% if role == 'admin' %}
+        <div class="tab-panel" id="panel-auth" role="tabpanel" aria-labelledby="tab-auth-btn">
+          <div id="login-container"></div>
+        </div>
+        {% endif %}
+      </div>
 
     </div>
+  </section>
 
-    <!-- RIGHT -->
-    <div class="logs-panel">
+</main>
 
-        <div class="logs-header">Motion Logs</div>
-        <div class="logs-container" id="motion-container"></div>
+<!-- MOBILE BOTTOM NAV (desktop hidden via CSS) -->
+<nav class="mobile-fab-area" aria-label="Mobile navigation">
+  <button class="fab-btn active" id="fab-motion" onclick="switchTab('motion', null, 'fab-motion')" aria-label="Motion logs">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>
+    </svg>
+    Motion
+  </button>
+  {% if role == 'admin' %}
+  <button class="fab-btn" id="fab-auth" onclick="switchTab('auth', null, 'fab-auth')" aria-label="Auth logs">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
+    </svg>
+    Auth
+  </button>
+  <a href="/failed-logins-page" class="fab-btn" aria-label="Failed logins">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+    </svg>
+    Blocked
+  </a>
+  {% endif %}
+</nav>
 
-    </div>
-
-    {% if role == 'admin' %}
-    <!-- AUTH LOGS (admin only) -->
-    <div class="logs-panel">
-
-        <div class="logs-header">Auth Logs</div>
-        <div class="logs-container" id="login-container"></div>
-
-    </div>
-    {% endif %}
-
-</div>
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toast-wrap" aria-live="polite" aria-atomic="false"></div>
 
 <script>
+/* ============================================
+   TAB SWITCHER
+============================================ */
+let activeTab = 'motion';
+let activeFab = 'fab-motion';
 
-async function loadMotionLogs(){
-    const res = await fetch('/logs');
-    const data = await res.json();
+function switchTab(tab, tabBtn, fabId) {
+  activeTab = tab;
 
-    const container = document.getElementById('motion-container');
-    container.innerHTML = "";
+  // Desktop tabs
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  const activeTabBtn = document.getElementById('tab-' + tab + '-btn');
+  if (activeTabBtn) { activeTabBtn.classList.add('active'); activeTabBtn.setAttribute('aria-selected', 'true'); }
+  else if (tabBtn) { tabBtn.classList.add('active'); tabBtn.setAttribute('aria-selected', 'true'); }
 
-    data.logs.forEach(log => {
-        container.innerHTML += `
-        <div class="log-item">
-            <img class="log-image" src="${log.image}">
-            <div class="log-content">
-                <div class="log-title">Motion Detected</div>
-                <div class="log-time">${log.time}</div>
-            </div>
-        </div>`;
-    });
+  // Panels
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const panel = document.getElementById('panel-' + tab);
+  if (panel) panel.classList.add('active');
+
+  // Mobile fab
+  if (fabId) {
+    document.querySelectorAll('.fab-btn').forEach(b => b.classList.remove('active'));
+    const fab = document.getElementById(fabId);
+    if (fab) fab.classList.add('active');
+  }
 }
 
-async function loadLoginLogs(){
-    const container = document.getElementById('login-container');
+/* ============================================
+   LIVE CLOCK
+============================================ */
+function updateClock() {
+  const now = new Date();
+  const t = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const d = now.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+  const el = document.getElementById('header-clock');
+  if (el) el.textContent = d + ' · ' + t;
+
+  const ts = document.getElementById('cam-timestamp');
+  if (ts) ts.textContent = now.toLocaleString('en-US', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+/* ============================================
+   TOAST NOTIFICATIONS
+============================================ */
+function showToast(type, title, msg) {
+  const wrap = document.getElementById('toast-wrap');
+  const icons = {
+    motion: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>`,
+    auth: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>`
+  };
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `
+    <div class="toast-icon ${type}">${icons[type]||icons.auth}</div>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      <div class="toast-msg">${msg}</div>
+    </div>
+    <button class="toast-close" onclick="dismissToast(this.parentElement)" aria-label="Dismiss">
+      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+    </button>`;
+  wrap.prepend(toast);
+  // Keep max 3 toasts
+  const toasts = wrap.querySelectorAll('.toast');
+  if (toasts.length > 3) dismissToast(toasts[toasts.length - 1]);
+  setTimeout(() => dismissToast(toast), 5000);
+}
+
+function dismissToast(el) {
+  if (!el || el.classList.contains('removing')) return;
+  el.classList.add('removing');
+  el.addEventListener('animationend', () => el.remove(), {once:true});
+}
+
+/* ============================================
+   MOTION ALERT BANNER
+============================================ */
+let lastMotionTime = null;
+
+function updateMotionAlert(latestTime) {
+  const banner = document.getElementById('motion-alert');
+  const timeEl = document.getElementById('motion-alert-time');
+  if (!latestTime) { banner.classList.remove('active'); return; }
+  const age = (Date.now() - new Date(latestTime).getTime()) / 1000;
+  if (age < 30) {
+    banner.classList.add('active');
+    if (timeEl) timeEl.textContent = new Date(latestTime).toLocaleTimeString();
+  } else {
+    banner.classList.remove('active');
+  }
+}
+
+/* ============================================
+   SPINNING INDICATOR
+============================================ */
+function setRefreshing(active) {
+  const el = document.getElementById('refresh-spin');
+  if (el) el.classList.toggle('active', active);
+}
+
+/* ============================================
+   EMPTY STATE
+============================================ */
+function emptyState(icon, message) {
+  return `<div class="empty-state">
+    <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${icon}</svg>
+    <p>${message}</p>
+  </div>`;
+}
+
+/* ============================================
+   MOTION LOGS
+============================================ */
+let prevMotionId = null;
+let motionFirstLoad = true;
+
+async function loadMotionLogs() {
+  setRefreshing(true);
+  try {
+    const res = await fetch('/logs');
+    const data = await res.json();
+    const container = document.getElementById('motion-container');
     if (!container) return;
 
+    // Badge count
+    const countEl = document.getElementById('motion-count');
+    if (countEl) countEl.textContent = data.logs ? data.logs.length : 0;
+
+    if (!data.logs || data.logs.length === 0) {
+      container.innerHTML = emptyState(
+        '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>',
+        'No motion detected yet'
+      );
+      updateMotionAlert(null);
+      return;
+    }
+
+    const latest = data.logs[0];
+
+    // Toast on new event (after first load)
+    if (!motionFirstLoad && prevMotionId && latest.time !== prevMotionId) {
+      showToast('motion', 'Motion Detected', 'New event captured · ' + new Date(latest.time).toLocaleTimeString());
+    }
+    prevMotionId = latest.time;
+    motionFirstLoad = false;
+    updateMotionAlert(latest.time);
+
+    container.innerHTML = data.logs.map(log => `
+      <div class="log-item">
+        <img class="log-thumb" src="${log.image}" alt="Motion snapshot" loading="lazy">
+        <div class="log-body">
+          <div class="log-title">
+            <span class="badge motion">MOTION</span>
+          </div>
+          <div class="log-time">${new Date(log.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</div>
+        </div>
+      </div>`).join('');
+  } catch(e) {
+    console.error('Motion logs error:', e);
+  } finally {
+    setRefreshing(false);
+  }
+}
+
+/* ============================================
+   AUTH LOGS (admin only)
+============================================ */
+let prevAuthTime = null;
+let authFirstLoad = true;
+
+async function loadLoginLogs() {
+  const container = document.getElementById('login-container');
+  if (!container) return;
+  try {
     const res = await fetch('/login_logs');
     const data = await res.json();
 
-    data.logs.forEach(log => {
+    const countEl = document.getElementById('auth-count');
+    if (countEl) countEl.textContent = data.logs ? data.logs.length : 0;
 
-        const color = log.type === "SUCCESS" ? "success" : "failed";
+    if (!data.logs || data.logs.length === 0) {
+      container.innerHTML = emptyState(
+        '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>',
+        'No auth events yet'
+      );
+      return;
+    }
 
-        container.innerHTML += `
-        <div class="log-item">
-            <div class="log-content">
-                <div class="log-title ${color}">
-                    ${log.type} LOGIN
-                </div>
-                <div class="log-time">User: ${log.username}</div>
-                <div class="log-time">${log.time}</div>
-            </div>
-        </div>`;
-    });
+    const latest = data.logs[0];
+    if (!authFirstLoad && prevAuthTime && latest.time !== prevAuthTime) {
+      const isLogin = latest.type === 'LOGIN_SUCCESS';
+      showToast('auth', isLogin ? 'Login Success' : latest.type.replace(/_/g,' '),
+        (latest.username || '?') + ' · ' + (latest.ip || ''));
+    }
+    prevAuthTime = latest.time;
+    authFirstLoad = false;
+
+    const icons = {
+      LOGIN_SUCCESS: {cls:'success', svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>'},
+      LOGIN_FAILED:  {cls:'failed',  svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>'},
+      LOGOUT:        {cls:'logout',  svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/>'}
+    };
+
+    container.innerHTML = data.logs.map(log => {
+      const ic = icons[log.type] || icons.LOGOUT;
+      const badgeCls = log.type === 'LOGIN_SUCCESS' ? 'success' : log.type === 'LOGIN_FAILED' ? 'failed' : 'logout';
+      const label = log.type.replace(/_/g, ' ');
+      return `<div class="log-item">
+        <div class="log-icon ${ic.cls}" aria-hidden="true">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic.svg}</svg>
+        </div>
+        <div class="log-body">
+          <div class="log-title">
+            <span class="badge ${badgeCls}">${label}</span>
+            <span style="font-size:12px;color:var(--text-2)">${log.username || ''}</span>
+          </div>
+          <div class="log-ip">${log.ip || ''}</div>
+          <div class="log-time">${new Date(log.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    console.error('Auth logs error:', e);
+  }
 }
 
-setInterval(loadMotionLogs, 2000);
-setInterval(loadLoginLogs, 2000);
+/* ============================================
+   STATS
+============================================ */
+async function loadStats() {
+  try {
+    const res = await fetch('/stats');
+    const d = await res.json();
+    const sm = document.getElementById('stat-motion');
+    const sf = document.getElementById('stat-failed');
+    const sa = document.getElementById('stat-auth');
+    const fc = document.getElementById('failed-count');
+    if (sm) sm.textContent = d.motion_today ?? '—';
+    if (sf) sf.textContent = d.failed_logins_today ?? '—';
+    if (sa) sa.textContent = d.auth_events_today ?? '—';
+    if (fc) fc.textContent = d.failed_logins_today ?? '—';
+  } catch(e) {}
+}
 
+/* ============================================
+   INIT & POLLING
+============================================ */
 loadMotionLogs();
 loadLoginLogs();
+loadStats();
+setInterval(loadMotionLogs, 2000);
+setInterval(loadLoginLogs, 2000);
+setInterval(loadStats, 10000);
 
+// Prefers reduced motion
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.querySelectorAll('.pulse,.live-dot,.motion-alert-dot,.blink').forEach(el => {
+    el.style.animation = 'none';
+  });
+}
 </script>
-
 </body>
 </html>

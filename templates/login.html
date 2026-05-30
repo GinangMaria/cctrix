@@ -3,112 +3,311 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CCTV Login</title>
-
+<title>CCTRIX — Secure Login</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial, Helvetica, sans-serif;
+:root{
+  --bg:#020617;
+  --surface:#0F172A;
+  --surface2:#1E293B;
+  --border:#334155;
+  --accent:#22C55E;
+  --accent-dim:rgba(34,197,94,.12);
+  --accent-glow:rgba(34,197,94,.25);
+  --red:#EF4444;
+  --text:#F8FAFC;
+  --muted:#94A3B8;
+  --radius:14px;
 }
-
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%}
 body{
-    min-height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(135deg,#0f172a,#111827,#1e293b);
+  font-family:'Fira Sans',sans-serif;
+  background:var(--bg);
+  min-height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  position:relative;
+  overflow:hidden;
 }
 
-.phone{
-    width:100%;
-    max-width:500px;
-    padding:20px;
+/* Animated grid */
+body::before{
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(34,197,94,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,197,94,.04) 1px,transparent 1px);
+  background-size:44px 44px;
+  animation:gridScroll 25s linear infinite;
+  pointer-events:none;
+  z-index:0;
+}
+@keyframes gridScroll{
+  0%{transform:translateY(0)}
+  100%{transform:translateY(44px)}
 }
 
-.screen{
-    width:100%;
-    background:rgba(255,255,255,0.05);
-    border-radius:20px;
-    padding:40px;
-    border:1px solid rgba(255,255,255,0.08);
+/* Glow orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
+.orb-1{width:500px;height:500px;background:rgba(34,197,94,.07);top:-200px;left:-150px;animation:orbFloat 12s ease-in-out infinite}
+.orb-2{width:350px;height:350px;background:rgba(59,130,246,.06);bottom:-100px;right:-80px;animation:orbFloat 15s ease-in-out infinite reverse}
+@keyframes orbFloat{
+  0%,100%{transform:translate(0,0)}
+  50%{transform:translate(30px,20px)}
 }
 
-/* LOGO CONTAINER (UPDATED) */
-.logo{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    margin-bottom:15px;
+.card{
+  width:100%;
+  max-width:420px;
+  background:var(--surface);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;
+  padding:clamp(28px,5vw,44px) clamp(24px,5vw,40px);
+  position:relative;
+  z-index:1;
+  box-shadow:
+    0 30px 60px rgba(0,0,0,.6),
+    0 0 0 1px rgba(255,255,255,.04),
+    0 0 40px rgba(34,197,94,.04);
+  animation:cardIn .4s cubic-bezier(.16,1,.3,1) both;
+}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(16px)}
+  to{opacity:1;transform:translateY(0)}
 }
 
-/* YOUR IMAGE LOGO */
-.logo img{
-    width:200px;
-    height:200px;
-    object-fit:contain;
-    border-radius:15px;
-   
+/* Logo */
+.logo-area{text-align:center;margin-bottom:28px}
+.logo-img{
+  width:110px;height:110px;
+  object-fit:contain;
+  margin:0 auto 10px;
+  display:block;
+  filter:drop-shadow(0 0 18px rgba(34,197,94,.2));
+  animation:logoFloat 4s ease-in-out infinite;
+}
+@keyframes logoFloat{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(-5px)}
+}
+.logo-name{
+  font-family:'Fira Code',monospace;
+  font-size:28px;font-weight:700;
+  color:var(--text);letter-spacing:3px;
+}
+.logo-name span{color:var(--accent)}
+.logo-sub{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.5px}
+
+.status-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:var(--accent-dim);
+  border:1px solid rgba(34,197,94,.2);
+  border-radius:100px;
+  padding:5px 12px;
+  font-size:11px;
+  font-family:'Fira Code',monospace;
+  color:var(--accent);
+  margin-top:12px;
+  letter-spacing:.5px;
+}
+.pulse{
+  width:6px;height:6px;
+  background:var(--accent);
+  border-radius:50%;
+  animation:blink 1.8s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+/* Error */
+.error-box{
+  background:rgba(239,68,68,.1);
+  border:1px solid rgba(239,68,68,.3);
+  border-radius:10px;
+  padding:12px 14px;
+  margin-bottom:20px;
+  display:flex;align-items:center;gap:10px;
+  font-size:13px;color:#FCA5A5;
+  animation:shake .3s cubic-bezier(.36,.07,.19,.97) both;
+}
+@keyframes shake{
+  10%,90%{transform:translate3d(-1px,0,0)}
+  20%,80%{transform:translate3d(2px,0,0)}
+  30%,50%,70%{transform:translate3d(-2px,0,0)}
+  40%,60%{transform:translate3d(2px,0,0)}
+}
+.error-box svg{flex-shrink:0;color:#F87171}
+
+/* Form */
+.form-group{margin-bottom:16px}
+label{
+  display:block;
+  font-size:11px;font-weight:600;
+  color:var(--muted);
+  text-transform:uppercase;letter-spacing:.9px;
+  margin-bottom:8px;
+}
+.input-wrap{position:relative}
+.input-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;
+  transition:color 150ms;
+}
+.input-wrap:focus-within .input-icon{color:var(--accent)}
+input[type=text],input[type=password]{
+  width:100%;height:50px;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  color:var(--text);
+  font-family:'Fira Sans',sans-serif;font-size:15px;
+  padding:0 46px;
+  outline:none;
+  transition:border-color 150ms,box-shadow 150ms;
+  -webkit-appearance:none;
+  appearance:none;
+}
+input:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px var(--accent-glow);
+}
+input::placeholder{color:#475569}
+
+.pw-toggle{
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;
+  color:var(--muted);cursor:pointer;
+  padding:6px;display:flex;align-items:center;
+  border-radius:6px;
+  transition:color 150ms,background 150ms;
+  min-width:32px;min-height:32px;justify-content:center;
+}
+.pw-toggle:hover{color:var(--text);background:rgba(255,255,255,.06)}
+
+/* Submit */
+.submit-btn{
+  width:100%;height:52px;
+  background:var(--accent);
+  color:#000;
+  font-family:'Fira Sans',sans-serif;
+  font-size:14px;font-weight:700;
+  border:none;border-radius:10px;cursor:pointer;
+  margin-top:22px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:background 150ms,transform 80ms,box-shadow 150ms;
+  letter-spacing:.8px;
+  text-transform:uppercase;
+}
+.submit-btn:hover{
+  background:#16A34A;
+  box-shadow:0 0 24px var(--accent-glow);
+}
+.submit-btn:active{transform:scale(.98)}
+.submit-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+/* Footer */
+.login-footer{
+  margin-top:22px;text-align:center;
+  font-size:12px;color:#475569;
+  display:flex;align-items:center;justify-content:center;gap:6px;
 }
 
-.title{
-    text-align:center;
-    color:white;
-    font-size:32px;
-    font-weight:bold;
-    margin-bottom:35px;
+/* Divider */
+.divider{
+  display:flex;align-items:center;gap:12px;
+  margin:20px 0;color:var(--border);font-size:11px;color:#334155;
 }
-
-input, button{
-    width:100%;
-    padding:15px;
-    margin-bottom:18px;
-    border-radius:10px;
-    border:none;
-}
-
-input{
-    background:#1f2937;
-    color:white;
-}
-
-button{
-    background:#8b5cf6;
-    color:white;
-    font-size:18px;
-    font-weight:bold;
-    cursor:pointer;
-}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
 </style>
 </head>
-
 <body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
 
-<div class="phone">
-<div class="screen">
+<div class="card">
 
-    {% if error %}
-    <div style="background:red;color:white;padding:10px;border-radius:10px;margin-bottom:15px;">
-        ❌ INVALID CREDENTIALS
+  <div class="logo-area">
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="CCTRIX Logo" class="logo-img">
+    <div class="logo-name">CCT<span>RIX</span></div>
+    <div class="logo-sub">CCTV Network Monitoring System</div>
+    <div class="status-badge">
+      <span class="pulse"></span>SYSTEM ONLINE
     </div>
-    {% endif %}
+  </div>
 
-    <!-- LOGO (REPLACED SHIELD ICON) -->
-    <div class="logo">
-        <img src="{{ url_for('static', filename='logo.png') }}" alt="CCTRIX Logo">
+  {% if error %}
+  <div class="error-box" role="alert">
+    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+    </svg>
+    {{ error }}
+  </div>
+  {% endif %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label for="username">Username</label>
+      <div class="input-wrap">
+        <span class="input-icon" aria-hidden="true">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
+          </svg>
+        </span>
+        <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="username">
+      </div>
     </div>
 
-    
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <span class="input-icon" aria-hidden="true">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+          </svg>
+        </span>
+        <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
+        <button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Toggle password visibility">
+          <svg id="eye-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
 
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">LOGIN</button>
-    </form>
+    <button type="submit" class="submit-btn">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+      </svg>
+      Access System
+    </button>
+  </form>
+
+  <div class="login-footer">
+    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
+    </svg>
+    Secured · Authorized access only · PUP Santa Rosa
+  </div>
 
 </div>
-</div>
 
+<script>
+function togglePw(btn) {
+  const pw = document.getElementById('password');
+  const icon = document.getElementById('eye-icon');
+  const isHidden = pw.type === 'password';
+  pw.type = isHidden ? 'text' : 'password';
+  btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+  icon.innerHTML = isHidden
+    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>'
+    : '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>';
+}
+</script>
 </body>
 </html>
