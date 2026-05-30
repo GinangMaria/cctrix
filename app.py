@@ -38,9 +38,18 @@ except Exception as e:
 # INIT DATABASE
 # =========================
 def init_db():
-
+    if not cursor:
+        return
     try:
-
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'viewer',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS detection_logs (
             id SERIAL PRIMARY KEY,
@@ -50,7 +59,17 @@ def init_db():
             detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
-
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS auth_logs (
+            id SERIAL PRIMARY KEY,
+            username TEXT,
+            action TEXT,
+            reason TEXT,
+            ip_address TEXT,
+            user_agent TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS failed_login_attempts (
             id SERIAL PRIMARY KEY,
@@ -60,13 +79,30 @@ def init_db():
             user_agent TEXT
         )
         """)
-
         conn.commit()
-
         print("Tables Ready!")
-
+        _seed_users()
     except Exception as e:
         print("INIT DB ERROR:", e)
+
+
+def _seed_users():
+    try:
+        cursor.execute("SELECT COUNT(*) FROM users")
+        count = cursor.fetchone()[0]
+        if count == 0:
+            cursor.execute("""
+                INSERT INTO users (username, password_hash, role) VALUES
+                (%s, %s, %s), (%s, %s, %s)
+            """, (
+                'admin', generate_password_hash('admin123'), 'admin',
+                'viewer', generate_password_hash('viewer123'), 'viewer'
+            ))
+            conn.commit()
+            print("Default users seeded — admin:admin123, viewer:viewer123")
+    except Exception as e:
+        print("SEED ERROR:", e)
+
 
 init_db()
 
