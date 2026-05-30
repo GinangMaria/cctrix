@@ -221,7 +221,13 @@ body{
 
 <div class="top-header">
     <div class="dashboard-title">Network Monitor</div>
-    <a class="logout-btn" href="/logout">Logout</a>
+    <div style="display:flex;gap:10px;align-items:center;">
+        {% if role == 'admin' %}
+        <a class="logout-btn" href="/failed-logins-page"
+           style="background:#ff4444;">Failed Logins</a>
+        {% endif %}
+        <a class="logout-btn" href="/logout">Logout</a>
+    </div>
 </div>
 
 <div class="dashboard">
@@ -249,6 +255,16 @@ body{
         <div class="logs-container" id="motion-container"></div>
 
     </div>
+
+    {% if role == 'admin' %}
+    <!-- AUTH LOGS (admin only) -->
+    <div class="logs-panel">
+
+        <div class="logs-header">Auth Logs</div>
+        <div class="logs-container" id="login-container"></div>
+
+    </div>
+    {% endif %}
 
 </div>
 
