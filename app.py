@@ -112,12 +112,6 @@ init_db()
 os.makedirs("static/logs", exist_ok=True)
 
 # =========================
-# LOGIN INFO
-# =========================
-USERNAME = "admin"
-PASSWORD = "1234"
-
-# =========================
 # CAMERA
 # =========================
 
@@ -160,52 +154,83 @@ def is_ip_blocked(ip):
         return False
 
 # =========================
+# AUTH LOGGER
+# =========================
+def _log_auth(username, action, reason, ip, user_agent):
+    if not cursor:
+        return
+    try:
+        cursor.execute("""
+            INSERT INTO auth_logs (username, action, reason, ip_address, user_agent)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (username, action, reason, ip, user_agent))
+        conn.commit()
+    except Exception as e:
+        print("AUTH LOG ERROR:", e)
+
+# =========================
+# ROLE GUARD
+# =========================
+def require_admin(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not session.get('logged_in'):
+            return redirect(url_for('login'))
+        if session.get('role') != 'admin':
+            return redirect(url_for('index'))
+        return f(*args, **kwargs)
+    return decorated
+
+# =========================
 # LOGIN
 # =========================
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-
     ip = request.remote_addr
     user_agent = request.headers.get('User-Agent')
 
     if request.method == 'POST':
 
         if is_ip_blocked(ip):
-
             return render_template(
                 "login.html",
-                error="Too many failed attempts."
+                error="Too many failed attempts. Try again in 10 minutes."
             )
 
         username = request.form.get('username')
         password = request.form.get('password')
 
-        if username == USERNAME and password == PASSWORD:
+        user = None
+        if cursor:
+            try:
+                cursor.execute(
+                    "SELECT id, password_hash, role FROM users WHERE username = %s",
+                    (username,)
+                )
+                user = cursor.fetchone()
+            except Exception as e:
+                print("DB ERROR:", e)
 
+        if user and check_password_hash(user[1], password):
             session['logged_in'] = True
-
+            session['username'] = username
+            session['role'] = user[2]
+            _log_auth(username, 'LOGIN_SUCCESS', 'Valid credentials', ip, user_agent)
             return redirect(url_for('index'))
 
-        try:
+        # Failed login
+        if cursor:
+            try:
+                cursor.execute("""
+                    INSERT INTO failed_login_attempts (username, ip_address, user_agent)
+                    VALUES (%s, %s, %s)
+                """, (username, ip, user_agent))
+                conn.commit()
+            except Exception as e:
+                print("FAILED LOGIN ERROR:", e)
 
-            cursor.execute("""
-                INSERT INTO failed_login_attempts (
-                    username,
-                    ip_address,
-                    user_agent
-                )
-                VALUES (%s, %s, %s)
-            """, (username, ip, user_agent))
-
-            conn.commit()
-
-        except Exception as e:
-            print("LOGIN LOG ERROR:", e)
-
-        return render_template(
-            "login.html",
-            error="Invalid username or password"
-        )
+        _log_auth(username, 'LOGIN_FAILED', 'Invalid credentials', ip, user_agent)
+        return render_template("login.html", error="Invalid username or password")
 
     return render_template("login.html")
 
@@ -214,9 +239,11 @@ def login():
 # =========================
 @app.route('/logout')
 def logout():
-
+    username = session.get('username', 'unknown')
+    ip = request.remote_addr
+    user_agent = request.headers.get('User-Agent')
+    _log_auth(username, 'LOGOUT', 'User logged out', ip, user_agent)
     session.clear()
-
     return redirect(url_for('login'))
 
 # =========================
@@ -224,12 +251,9 @@ def logout():
 # =========================
 @app.route('/')
 def index():
-
     if not session.get('logged_in'):
-
         return redirect(url_for('login'))
-
-    return render_template("index.html")
+    return render_template("index.html", role=session.get('role'))
 
 # =========================
 # VIDEO STREAM
