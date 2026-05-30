@@ -1,32 +1,38 @@
 from flask import Flask, render_template, Response, request, redirect, url_for, session, jsonify
+from werkzeug.security import check_password_hash, generate_password_hash
+from functools import wraps
 import cv2
 import time
 import os
 import numpy as np
 from datetime import datetime, timedelta
 import psycopg2
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "cctv_secret_key"
+app.secret_key = os.environ.get("SECRET_KEY", "cctv_secret_key_change_in_prod")
 
 # =========================
 # DATABASE CONNECTION
 # =========================
+DB_CONFIG = {
+    "host": os.environ.get("DB_HOST", "turntable.proxy.rlwy.net"),
+    "port": os.environ.get("DB_PORT", "43684"),
+    "user": os.environ.get("DB_USER", "postgres"),
+    "password": os.environ.get("DB_PASSWORD", ""),
+    "database": os.environ.get("DB_NAME", "railway"),
+}
+
 try:
-    conn = psycopg2.connect(
-        host="turntable.proxy.rlwy.net",
-        port="43684",
-        user="postgres",
-        password="QGGzlutsqnoowNFWBnOvTgIDmWWWMJzg",
-        database="railway"
-    )
-
+    conn = psycopg2.connect(**DB_CONFIG)
     cursor = conn.cursor()
-
     print("Database Connected!")
-
 except Exception as e:
     print("DATABASE ERROR:", e)
+    conn = None
+    cursor = None
 
 # =========================
 # INIT DATABASE
