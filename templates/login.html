@@ -7,306 +7,509 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 <style>
+/* ─── TOKENS ─── */
 :root{
   --bg:#020617;
-  --surface:#0F172A;
-  --surface2:#1E293B;
-  --border:#334155;
-  --accent:#22C55E;
-  --accent-dim:rgba(34,197,94,.12);
-  --accent-glow:rgba(34,197,94,.25);
-  --red:#EF4444;
-  --text:#F8FAFC;
-  --muted:#94A3B8;
-  --radius:14px;
+  --s1:#0F172A;--s2:#1E293B;--s3:#263148;
+  --border:rgba(255,255,255,.07);--bsolid:#334155;
+  --accent:#22C55E;--adim:rgba(34,197,94,.12);--aglow:rgba(34,197,94,.22);
+  --red:#EF4444;--rdim:rgba(239,68,68,.12);
+  --amber:#F59E0B;
+  --text:#F8FAFC;--t2:#CBD5E1;--muted:#64748B;
+  --r:12px;--rl:20px;
+  --ease:cubic-bezier(.16,1,.3,1);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{height:100%}
+html{height:100%;-webkit-text-size-adjust:100%}
 body{
   font-family:'Fira Sans',sans-serif;
   background:var(--bg);
   min-height:100dvh;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  display:flex;align-items:center;justify-content:center;
   padding:16px;
-  position:relative;
-  overflow:hidden;
+  position:relative;overflow:hidden;
 }
 
-/* Animated grid */
+/* ─── BACKGROUND ─── */
 body::before{
-  content:'';
-  position:fixed;
-  inset:0;
+  content:'';position:fixed;inset:0;
   background-image:
-    linear-gradient(rgba(34,197,94,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(34,197,94,.04) 1px,transparent 1px);
-  background-size:44px 44px;
-  animation:gridScroll 25s linear infinite;
-  pointer-events:none;
-  z-index:0;
+    linear-gradient(rgba(34,197,94,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,197,94,.035) 1px,transparent 1px);
+  background-size:48px 48px;
+  animation:grid 30s linear infinite;pointer-events:none;
 }
-@keyframes gridScroll{
-  0%{transform:translateY(0)}
-  100%{transform:translateY(44px)}
-}
+@keyframes grid{to{background-position:0 48px}}
+.orb{position:fixed;border-radius:50%;filter:blur(100px);pointer-events:none}
+.o1{width:600px;height:600px;background:rgba(34,197,94,.055);top:-200px;left:-200px;animation:orb 14s ease-in-out infinite}
+.o2{width:400px;height:400px;background:rgba(59,130,246,.05);bottom:-100px;right:-100px;animation:orb 18s ease-in-out infinite reverse}
+.o3{width:300px;height:300px;background:rgba(245,158,11,.04);top:50%;left:50%;transform:translate(-50%,-50%);animation:orb 22s ease-in-out infinite 2s}
+@keyframes orb{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,20px)}}
 
-/* Glow orbs */
-.orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0}
-.orb-1{width:500px;height:500px;background:rgba(34,197,94,.07);top:-200px;left:-150px;animation:orbFloat 12s ease-in-out infinite}
-.orb-2{width:350px;height:350px;background:rgba(59,130,246,.06);bottom:-100px;right:-80px;animation:orbFloat 15s ease-in-out infinite reverse}
-@keyframes orbFloat{
-  0%,100%{transform:translate(0,0)}
-  50%{transform:translate(30px,20px)}
-}
-
-.card{
-  width:100%;
-  max-width:420px;
-  background:var(--surface);
+/* ─── WRAPPER ─── */
+.wrapper{
+  position:relative;z-index:1;
+  display:flex;
+  width:min(880px,100%);
+  background:var(--s1);
   border:1px solid rgba(255,255,255,.07);
-  border-radius:20px;
-  padding:clamp(28px,5vw,44px) clamp(24px,5vw,40px);
-  position:relative;
-  z-index:1;
-  box-shadow:
-    0 30px 60px rgba(0,0,0,.6),
-    0 0 0 1px rgba(255,255,255,.04),
-    0 0 40px rgba(34,197,94,.04);
-  animation:cardIn .4s cubic-bezier(.16,1,.3,1) both;
+  border-radius:var(--rl);
+  overflow:hidden;
+  box-shadow:0 40px 80px rgba(0,0,0,.65),0 0 0 1px rgba(255,255,255,.04),0 0 60px rgba(34,197,94,.04);
+  animation:wrapIn .5s var(--ease) both;
 }
-@keyframes cardIn{
-  from{opacity:0;transform:translateY(16px)}
-  to{opacity:1;transform:translateY(0)}
+@keyframes wrapIn{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:none}}
+
+/* ─── LEFT BRAND PANEL ─── */
+.brand{
+  display:none;
+  flex-direction:column;
+  justify-content:space-between;
+  width:340px;flex-shrink:0;
+  padding:44px 40px;
+  background:linear-gradient(155deg,#0a1628 0%,#0d1e38 60%,#0f2140 100%);
+  border-right:1px solid rgba(255,255,255,.06);
+  position:relative;overflow:hidden;
+}
+@media(min-width:760px){.brand{display:flex}}
+
+/* Decorative scan lines */
+.brand::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(34,197,94,.012) 2px,rgba(34,197,94,.012) 4px);
+  pointer-events:none;
+}
+.brand::after{
+  content:'';position:absolute;
+  bottom:-80px;right:-80px;
+  width:280px;height:280px;
+  background:radial-gradient(circle,rgba(34,197,94,.08) 0%,transparent 70%);
+  border-radius:50%;
 }
 
-/* Logo */
-.logo-area{text-align:center;margin-bottom:28px}
-.logo-img{
-  width:110px;height:110px;
+.brand-top{}
+.brand-logo{
+  display:flex;align-items:center;gap:12px;margin-bottom:32px;
+}
+.brand-logo-img{
+  width:52px;height:52px;
   object-fit:contain;
-  margin:0 auto 10px;
-  display:block;
-  filter:drop-shadow(0 0 18px rgba(34,197,94,.2));
-  animation:logoFloat 4s ease-in-out infinite;
+  filter:drop-shadow(0 0 12px rgba(34,197,94,.3));
+  animation:logoFloat 5s ease-in-out infinite;
 }
-@keyframes logoFloat{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-5px)}
-}
-.logo-name{
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+.brand-logo-text{
   font-family:'Fira Code',monospace;
-  font-size:28px;font-weight:700;
+  font-size:22px;font-weight:700;
   color:var(--text);letter-spacing:3px;
 }
-.logo-name span{color:var(--accent)}
-.logo-sub{font-size:12px;color:var(--muted);margin-top:4px;letter-spacing:.5px}
+.brand-logo-text span{color:var(--accent)}
+
+.brand-tagline{
+  font-size:22px;font-weight:700;
+  color:var(--text);line-height:1.3;
+  margin-bottom:10px;
+}
+.brand-tagline span{color:var(--accent)}
+.brand-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:28px}
+
+.feature-list{display:flex;flex-direction:column;gap:13px}
+.feature{
+  display:flex;align-items:center;gap:12px;
+  font-size:13px;color:var(--t2);
+}
+.feature-icon{
+  width:32px;height:32px;flex-shrink:0;
+  background:var(--adim);border:1px solid rgba(34,197,94,.18);
+  border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:var(--accent);
+}
+
+.brand-footer{
+  padding-top:24px;
+  border-top:1px solid rgba(255,255,255,.06);
+}
+.brand-school{
+  display:flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--muted);
+}
+.brand-school svg{color:var(--accent);flex-shrink:0}
+.brand-school span{line-height:1.4}
+
+/* ─── RIGHT FORM PANEL ─── */
+.form-panel{
+  flex:1;
+  padding:clamp(28px,5vw,48px) clamp(24px,5vw,44px);
+  display:flex;flex-direction:column;
+  min-height:clamp(520px,80dvh,680px);
+}
+
+/* Mobile logo (hidden on desktop) */
+.mobile-logo{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:28px;
+}
+@media(min-width:760px){.mobile-logo{display:none}}
+.mobile-logo img{width:44px;height:44px;object-fit:contain;filter:drop-shadow(0 0 8px rgba(34,197,94,.3))}
+.mobile-logo-name{
+  font-family:'Fira Code',monospace;
+  font-size:20px;font-weight:700;color:var(--text);letter-spacing:2px;
+}
+.mobile-logo-name span{color:var(--accent)}
+
+.form-heading{
+  font-size:22px;font-weight:700;color:var(--text);
+  margin-bottom:4px;
+}
+.form-subheading{font-size:13px;color:var(--muted);margin-bottom:26px}
 
 .status-badge{
   display:inline-flex;align-items:center;gap:7px;
-  background:var(--accent-dim);
-  border:1px solid rgba(34,197,94,.2);
-  border-radius:100px;
-  padding:5px 12px;
-  font-size:11px;
-  font-family:'Fira Code',monospace;
-  color:var(--accent);
-  margin-top:12px;
-  letter-spacing:.5px;
+  background:var(--adim);border:1px solid rgba(34,197,94,.2);
+  border-radius:100px;padding:4px 11px;
+  font-size:11px;font-family:'Fira Code',monospace;color:var(--accent);
+  margin-bottom:24px;letter-spacing:.4px;
 }
 .pulse{
-  width:6px;height:6px;
-  background:var(--accent);
-  border-radius:50%;
+  width:6px;height:6px;background:var(--accent);border-radius:50%;
   animation:blink 1.8s ease-in-out infinite;
 }
 @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
 
 /* Error */
 .error-box{
-  background:rgba(239,68,68,.1);
+  background:var(--rdim);
   border:1px solid rgba(239,68,68,.3);
   border-radius:10px;
-  padding:12px 14px;
-  margin-bottom:20px;
-  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;margin-bottom:18px;
+  display:flex;align-items:flex-start;gap:10px;
   font-size:13px;color:#FCA5A5;
-  animation:shake .3s cubic-bezier(.36,.07,.19,.97) both;
+  animation:shake .35s var(--ease);
 }
 @keyframes shake{
-  10%,90%{transform:translate3d(-1px,0,0)}
-  20%,80%{transform:translate3d(2px,0,0)}
-  30%,50%,70%{transform:translate3d(-2px,0,0)}
-  40%,60%{transform:translate3d(2px,0,0)}
+  0%{transform:translateX(0)}10%{transform:translateX(-4px)}
+  30%{transform:translateX(4px)}50%{transform:translateX(-3px)}
+  70%{transform:translateX(2px)}100%{transform:translateX(0)}
 }
-.error-box svg{flex-shrink:0;color:#F87171}
+.error-box svg{flex-shrink:0;margin-top:1px;color:#F87171}
 
-/* Form */
-.form-group{margin-bottom:16px}
+/* Form groups */
+.form-group{margin-bottom:14px}
 label{
-  display:block;
-  font-size:11px;font-weight:600;
-  color:var(--muted);
-  text-transform:uppercase;letter-spacing:.9px;
-  margin-bottom:8px;
+  display:block;font-size:11px;font-weight:600;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.9px;
+  margin-bottom:7px;
 }
 .input-wrap{position:relative}
 .input-icon{
-  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  position:absolute;left:13px;top:50%;transform:translateY(-50%);
   color:var(--muted);pointer-events:none;
-  transition:color 150ms;
+  transition:color .15s;
 }
 .input-wrap:focus-within .input-icon{color:var(--accent)}
 input[type=text],input[type=password]{
-  width:100%;height:50px;
-  background:var(--surface2);
-  border:1px solid var(--border);
+  width:100%;height:48px;
+  background:var(--s2);
+  border:1px solid var(--bsolid);
   border-radius:10px;
   color:var(--text);
   font-family:'Fira Sans',sans-serif;font-size:15px;
   padding:0 46px;
   outline:none;
-  transition:border-color 150ms,box-shadow 150ms;
-  -webkit-appearance:none;
-  appearance:none;
+  transition:border-color .15s,box-shadow .15s;
+  -webkit-appearance:none;appearance:none;
 }
-input:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px var(--accent-glow);
-}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--aglow)}
 input::placeholder{color:#475569}
-
 .pw-toggle{
-  position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  position:absolute;right:11px;top:50%;transform:translateY(-50%);
   background:none;border:none;
   color:var(--muted);cursor:pointer;
-  padding:6px;display:flex;align-items:center;
-  border-radius:6px;
-  transition:color 150ms,background 150ms;
+  padding:6px;border-radius:6px;
+  display:flex;align-items:center;
+  transition:color .15s,background .15s;
   min-width:32px;min-height:32px;justify-content:center;
 }
 .pw-toggle:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.pw-toggle:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* reCAPTCHA */
+.recaptcha-wrap{
+  margin:16px 0;
+  display:flex;align-items:center;justify-content:center;
+}
+.recaptcha-wrap .g-recaptcha{
+  transform-origin:left center;
+}
+/* Scale reCAPTCHA on narrow screens */
+@media(max-width:360px){
+  .recaptcha-wrap{transform:scale(.85);transform-origin:center}
+}
 
 /* Submit */
 .submit-btn{
-  width:100%;height:52px;
-  background:var(--accent);
-  color:#000;
+  width:100%;height:50px;
+  background:var(--accent);color:#000;
   font-family:'Fira Sans',sans-serif;
-  font-size:14px;font-weight:700;
+  font-size:14px;font-weight:700;letter-spacing:.7px;
   border:none;border-radius:10px;cursor:pointer;
-  margin-top:22px;
   display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:background 150ms,transform 80ms,box-shadow 150ms;
-  letter-spacing:.8px;
+  transition:background .15s,transform .08s,box-shadow .15s;
   text-transform:uppercase;
+  margin-top:4px;
+  position:relative;overflow:hidden;
 }
-.submit-btn:hover{
-  background:#16A34A;
-  box-shadow:0 0 24px var(--accent-glow);
+.submit-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent);
+  transform:translateX(-100%);
+  transition:transform .5s;
 }
+.submit-btn:hover::after{transform:translateX(100%)}
+.submit-btn:hover{background:#16A34A;box-shadow:0 0 28px rgba(34,197,94,.35)}
 .submit-btn:active{transform:scale(.98)}
 .submit-btn:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.submit-btn:disabled{background:#1a3d27;color:#4a7a58;cursor:not-allowed;box-shadow:none}
+.submit-btn:disabled::after{display:none}
+.btn-spinner{
+  width:16px;height:16px;
+  border:2px solid rgba(0,0,0,.3);
+  border-top-color:#000;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+  display:none;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+.submit-btn.loading .btn-text{display:none}
+.submit-btn.loading .btn-spinner{display:block}
 
 /* Footer */
-.login-footer{
-  margin-top:22px;text-align:center;
-  font-size:12px;color:#475569;
+.form-footer{
+  margin-top:auto;padding-top:20px;
   display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:11px;color:#475569;
+  flex-wrap:wrap;text-align:center;
 }
+.form-footer svg{color:var(--accent);flex-shrink:0}
 
 /* Divider */
 .divider{
-  display:flex;align-items:center;gap:12px;
-  margin:20px 0;color:var(--border);font-size:11px;color:#334155;
+  display:flex;align-items:center;gap:10px;
+  margin:4px 0 16px;color:var(--bsolid);
 }
-.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border)}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--bsolid)}
+.divider span{font-size:11px;color:var(--muted);white-space:nowrap}
 </style>
 </head>
 <body>
-<div class="orb orb-1"></div>
-<div class="orb orb-2"></div>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="orb o3"></div>
 
-<div class="card">
+<div class="wrapper">
 
-  <div class="logo-area">
-    <img src="{{ url_for('static', filename='logo.png') }}" alt="CCTRIX Logo" class="logo-img">
-    <div class="logo-name">CCT<span>RIX</span></div>
-    <div class="logo-sub">CCTV Network Monitoring System</div>
-    <div class="status-badge">
-      <span class="pulse"></span>SYSTEM ONLINE
-    </div>
-  </div>
+  <!-- ── LEFT BRAND PANEL (desktop) ── -->
+  <aside class="brand" aria-hidden="true">
+    <div class="brand-top">
+      <div class="brand-logo">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="" class="brand-logo-img">
+        <div class="brand-logo-text">CCT<span>RIX</span></div>
+      </div>
 
-  {% if error %}
-  <div class="error-box" role="alert">
-    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
-    </svg>
-    {{ error }}
-  </div>
-  {% endif %}
+      <div class="brand-tagline">Intelligent<br><span>Security Monitoring</span></div>
+      <div class="brand-desc">Real-time CCTV surveillance with motion detection, role-based access control, and complete audit logging.</div>
 
-  <form method="POST">
-    <div class="form-group">
-      <label for="username">Username</label>
-      <div class="input-wrap">
-        <span class="input-icon" aria-hidden="true">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
-          </svg>
-        </span>
-        <input type="text" id="username" name="username" placeholder="Enter username" required autocomplete="username">
+      <div class="feature-list">
+        <div class="feature">
+          <div class="feature-icon">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+          </div>
+          Live CCTV feed with motion detection
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>
+          </div>
+          Real-time motion alerts &amp; snapshots
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+          </div>
+          Role-based access (Admin / Viewer)
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>
+          </div>
+          Complete activity &amp; audit logging
+        </div>
+        <div class="feature">
+          <div class="feature-icon">
+            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+          </div>
+          Brute-force protection &amp; IP blocking
+        </div>
       </div>
     </div>
 
-    <div class="form-group">
-      <label for="password">Password</label>
-      <div class="input-wrap">
-        <span class="input-icon" aria-hidden="true">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
-          </svg>
-        </span>
-        <input type="password" id="password" name="password" placeholder="Enter password" required autocomplete="current-password">
-        <button type="button" class="pw-toggle" onclick="togglePw(this)" aria-label="Toggle password visibility">
-          <svg id="eye-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-          </svg>
-        </button>
+    <div class="brand-footer">
+      <div class="brand-school">
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/></svg>
+        <span>Polytechnic University of the Philippines<br>Santa Rosa Campus · BSIT · COMP 012</span>
       </div>
     </div>
+  </aside>
 
-    <button type="submit" class="submit-btn">
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/>
+  <!-- ── RIGHT FORM PANEL ── -->
+  <main class="form-panel">
+
+    <!-- Mobile logo -->
+    <div class="mobile-logo" aria-hidden="true">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="CCTRIX Logo">
+      <span class="mobile-logo-name">CCT<span>RIX</span></span>
+    </div>
+
+    <div>
+      <h1 class="form-heading">Welcome back</h1>
+      <p class="form-subheading">Sign in to access the monitoring dashboard</p>
+    </div>
+
+    <div style="margin-top:14px">
+      <span class="status-badge">
+        <span class="pulse"></span>SYSTEM ONLINE
+      </span>
+    </div>
+
+    {% if error %}
+    <div class="error-box" role="alert">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
       </svg>
-      Access System
-    </button>
-  </form>
+      {{ error }}
+    </div>
+    {% endif %}
 
-  <div class="login-footer">
-    <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>
-    </svg>
-    Secured · Authorized access only · PUP Santa Rosa
-  </div>
+    <form method="POST" id="login-form" novalidate>
 
+      <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/></svg>
+          </span>
+          <input
+            type="text"
+            id="username"
+            name="username"
+            placeholder="Enter your username"
+            required
+            autocomplete="username"
+            autofocus
+            spellcheck="false"
+            autocapitalize="none"
+          >
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon" aria-hidden="true">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+          </span>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            placeholder="Enter your password"
+            required
+            autocomplete="current-password"
+          >
+          <button type="button" class="pw-toggle" id="pw-toggle" aria-label="Show password">
+            <svg id="eye-icon" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- reCAPTCHA v2 -->
+      <div class="divider"><span>Security verification</span></div>
+      <div class="recaptcha-wrap">
+        <div
+          class="g-recaptcha"
+          data-sitekey="{{ site_key }}"
+          data-theme="dark"
+          data-size="normal"
+        ></div>
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn">
+        <span class="btn-text" style="display:flex;align-items:center;gap:8px">
+          <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+          Sign In to CCTRIX
+        </span>
+        <div class="btn-spinner" aria-hidden="true"></div>
+      </button>
+
+    </form>
+
+    <footer class="form-footer">
+      <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+      Protected by reCAPTCHA &amp; hashed authentication
+      <span style="color:var(--bsolid)">·</span>
+      Unauthorized access is prohibited
+    </footer>
+
+  </main>
 </div>
 
 <script>
-function togglePw(btn) {
-  const pw = document.getElementById('password');
-  const icon = document.getElementById('eye-icon');
-  const isHidden = pw.type === 'password';
-  pw.type = isHidden ? 'text' : 'password';
-  btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
-  icon.innerHTML = isHidden
-    ? '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>'
-    : '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>';
+/* Password toggle */
+const pwInput  = document.getElementById('password');
+const eyeIcon  = document.getElementById('eye-icon');
+const pwToggle = document.getElementById('pw-toggle');
+const eyeOpen  = '<path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>';
+const eyeSlash = '<path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88"/>';
+
+pwToggle.addEventListener('click', () => {
+  const isHidden = pwInput.type === 'password';
+  pwInput.type = isHidden ? 'text' : 'password';
+  eyeIcon.innerHTML = isHidden ? eyeSlash : eyeOpen;
+  pwToggle.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+});
+
+/* Submit loading state */
+document.getElementById('login-form').addEventListener('submit', function(e) {
+  const username = document.getElementById('username').value.trim();
+  const password = pwInput.value.trim();
+  const recaptcha = document.querySelector('.g-recaptcha-response') ?
+    document.querySelector('.g-recaptcha-response').value : '';
+
+  if (!username || !password) return; // let browser validation handle it
+
+  const btn = document.getElementById('submit-btn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  // Re-enable after 8s as a safety fallback
+  setTimeout(() => {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    if (typeof grecaptcha !== 'undefined') grecaptcha.reset();
+  }, 8000);
+});
+
+/* Respect prefers-reduced-motion */
+if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  document.querySelectorAll('[class*="Float"],[class*="orb"]').forEach(el => {
+    el.style.animation = 'none';
+  });
 }
 </script>
 </body>

@@ -4,6 +4,9 @@ from functools import wraps
 import cv2
 import time
 import os
+import json
+import urllib.request
+import urllib.parse
 import numpy as np
 from datetime import datetime, timedelta
 import psycopg2
@@ -13,6 +16,11 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "cctv_secret_key_change_in_prod")
+
+# reCAPTCHA v2 — uses Google's official test keys by default (always pass).
+# Replace with real keys from https://www.google.com/recaptcha/admin in production.
+RECAPTCHA_SITE_KEY   = os.environ.get("RECAPTCHA_SITE_KEY",   "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MFLZsRwt")
+RECAPTCHA_SECRET_KEY = os.environ.get("RECAPTCHA_SECRET_KEY", "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ17ZFtSe")
 
 # =========================
 # DATABASE CONNECTION
@@ -156,6 +164,29 @@ def is_ip_blocked(ip):
         return False
 
 # =========================
+# RECAPTCHA VERIFIER
+# =========================
+def _verify_recaptcha(token, ip):
+    if not token:
+        return False
+    try:
+        data = urllib.parse.urlencode({
+            "secret": RECAPTCHA_SECRET_KEY,
+            "response": token,
+            "remoteip": ip,
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://www.google.com/recaptcha/api/siteverify",
+            data=data, method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+            return result.get("success", False)
+    except Exception as e:
+        print("reCAPTCHA error:", e)
+        return True  # fail open if Google is unreachable (dev safety)
+
+# =========================
 # AUTH LOGGER
 # =========================
 def _log_auth(username, action, reason, ip, user_agent):
@@ -191,13 +222,18 @@ def login():
     ip = request.remote_addr
     user_agent = request.headers.get('User-Agent')
 
+    def _render_login(error=None):
+        return render_template("login.html", error=error, site_key=RECAPTCHA_SITE_KEY)
+
     if request.method == 'POST':
 
         if is_ip_blocked(ip):
-            return render_template(
-                "login.html",
-                error="Too many failed attempts. Try again in 10 minutes."
-            )
+            return _render_login("Too many failed attempts. Try again in 10 minutes.")
+
+        # reCAPTCHA check
+        recaptcha_token = request.form.get('g-recaptcha-response', '')
+        if not _verify_recaptcha(recaptcha_token, ip):
+            return _render_login("Please complete the reCAPTCHA verification.")
 
         username = request.form.get('username')
         password = request.form.get('password')
@@ -232,9 +268,9 @@ def login():
                 print("FAILED LOGIN ERROR:", e)
 
         _log_auth(username, 'LOGIN_FAILED', 'Invalid credentials', ip, user_agent)
-        return render_template("login.html", error="Invalid username or password")
+        return _render_login("Invalid username or password.")
 
-    return render_template("login.html")
+    return _render_login()
 
 # =========================
 # LOGOUT
