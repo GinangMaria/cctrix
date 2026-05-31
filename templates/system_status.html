@@ -6,6 +6,7 @@
 <title>CCTRIX — System Status</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="{{ url_for('static', filename='protect.js') }}" defer></script>
 <style>
 :root{
   --bg:#020617;--s1:#0F172A;--s2:#1E293B;
@@ -203,7 +204,7 @@ h2 svg{color:var(--accent)}
     <div class="info-row"><span class="info-key">Auth Method</span><span class="info-val ok">PBKDF2-SHA256 hashed passwords</span></div>
     <div class="info-row"><span class="info-key">Session</span><span class="info-val ok">Flask server-side sessions</span></div>
     <div class="info-row"><span class="info-key">reCAPTCHA</span><span class="info-val ok">Google reCAPTCHA v2</span></div>
-    <div class="info-row"><span class="info-key">Brute-force Protection</span><span class="info-val ok">IP block after 5 attempts / 10 min</span></div>
+    <div class="info-row"><span class="info-key">Brute-force Protection</span><span class="info-val ok">IP block after 3 attempts / 1 min</span></div>
     <div class="info-row"><span class="info-key">Role-Based Access</span><span class="info-val ok">Admin + Viewer roles</span></div>
     <div class="info-row"><span class="info-key">Motion Detection</span><span class="info-val ok">OpenCV frame-diff algorithm</span></div>
     <div class="info-row"><span class="info-key">WSGI Server</span><span class="info-val">Gunicorn (production)</span></div>

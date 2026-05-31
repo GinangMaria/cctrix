@@ -159,7 +159,7 @@ def is_ip_blocked(ip):
 
     try:
 
-        time_limit = datetime.now() - timedelta(minutes=10)
+        time_limit = datetime.now() - timedelta(minutes=1)
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -170,7 +170,7 @@ def is_ip_blocked(ip):
 
         count = cursor.fetchone()[0]
 
-        return count >= 5
+        return count >= 3
 
     except:
         return False
@@ -244,7 +244,7 @@ def login():
     if request.method == 'POST':
 
         if is_ip_blocked(ip):
-            return _render_login("Too many failed attempts. Try again in 10 minutes.")
+            return _render_login("Too many failed attempts. Your IP is blocked for 1 minute.")
 
         # reCAPTCHA check
         recaptcha_token = request.form.get('g-recaptcha-response', '')
