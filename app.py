@@ -167,6 +167,10 @@ def is_ip_blocked(ip):
 # RECAPTCHA VERIFIER
 # =========================
 def _verify_recaptcha(token, ip):
+    # Skip verification when using Google's official test keys (local dev).
+    # In production, set real RECAPTCHA_SECRET_KEY in .env.
+    if RECAPTCHA_SECRET_KEY == "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ17ZFtSe":
+        return True  # test key — always pass
     if not token:
         return False
     try:
@@ -184,7 +188,7 @@ def _verify_recaptcha(token, ip):
             return result.get("success", False)
     except Exception as e:
         print("reCAPTCHA error:", e)
-        return True  # fail open if Google is unreachable (dev safety)
+        return True  # fail open if Google is unreachable
 
 # =========================
 # AUTH LOGGER
