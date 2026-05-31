@@ -42,6 +42,18 @@ except Exception as e:
     conn = None
     cursor = None
 
+def _ensure_conn():
+    global conn, cursor
+    try:
+        conn.cursor().execute("SELECT 1")
+    except Exception:
+        try:
+            conn = psycopg2.connect(**DB_CONFIG)
+            cursor = conn.cursor()
+            print("DB reconnected!")
+        except Exception as e:
+            print("DB reconnect failed:", e)
+
 # =========================
 # INIT DATABASE
 # =========================
@@ -295,7 +307,7 @@ def logout():
 def index():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
-    return render_template("index.html", role=session.get('role'))
+    return render_template("index.html", role=session.get('role'), username=session.get('username', ''))
 
 # =========================
 # VIDEO STREAM
@@ -508,7 +520,10 @@ def video():
 # =========================
 @app.route('/logs')
 def logs():
+    if not session.get('logged_in'):
+        return jsonify({"error": "unauthorized", "logs": []}), 401
 
+    _ensure_conn()
     try:
 
         cursor.execute("""
@@ -548,29 +563,18 @@ def logs():
 @app.route('/failed-logins-page')
 @require_admin
 def failed_logins_page():
-
+    _ensure_conn()
     try:
-
         cursor.execute("""
-            SELECT
-                username,
-                attempted_at,
-                ip_address,
-                user_agent
+            SELECT username, attempted_at, ip_address, user_agent
             FROM failed_login_attempts
-            ORDER BY id DESC
-            LIMIT 50
+            ORDER BY id DESC LIMIT 50
         """)
-
         rows = cursor.fetchall()
-
     except:
         rows = []
-
-    return render_template(
-        "failed_logins.html",
-        logs=rows
-    )
+    unique_ips = len(set(r[2] for r in rows if r[2]))
+    return render_template("failed_logins.html", logs=rows, unique_ips=unique_ips, role=session.get('role'))
 
 # =========================
 # AUTH LOGS API
@@ -578,9 +582,10 @@ def failed_logins_page():
 @app.route('/login_logs')
 def login_logs():
     if not session.get('logged_in'):
-        return redirect(url_for('login'))
+        return jsonify({"error": "unauthorized", "logs": []}), 401
     if session.get('role') != 'admin':
         return jsonify({"logs": []})
+    _ensure_conn()
     try:
         cursor.execute("""
             SELECT username, action, reason, ip_address, timestamp
@@ -610,7 +615,8 @@ def login_logs():
 @app.route('/stats')
 def stats():
     if not session.get('logged_in'):
-        return jsonify({"error": "unauthorized"})
+        return jsonify({"error": "unauthorized"}), 401
+    _ensure_conn()
     try:
         from datetime import date
         today = date.today()
@@ -673,6 +679,7 @@ def export_auth():
 @app.route('/system-status')
 @require_admin
 def system_status():
+    _ensure_conn()
     db_ok = False
     try:
         cursor.execute("SELECT 1")

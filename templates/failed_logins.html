@@ -307,7 +307,7 @@ body{
         </svg>
       </div>
       <div>
-        <div class="stat-value">{{ logs | map(attribute=2) | list | unique | list | length if logs else 0 }}</div>
+        <div class="stat-value">{{ unique_ips }}</div>
         <div class="stat-label">Unique IPs</div>
       </div>
     </div>

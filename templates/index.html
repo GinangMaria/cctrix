@@ -568,6 +568,10 @@ body{
   .tab-panels{min-height:300px;position:relative;height:360px}
   .tab-panel{position:absolute}
 }
+@keyframes newItem{
+  from{opacity:0;transform:translateY(-8px);background:rgba(34,197,94,.1)}
+  to{opacity:1;transform:translateY(0);background:transparent}
+}
 </style>
 </head>
 <body>
@@ -784,26 +788,16 @@ body{
    TAB SWITCHER
 ============================================ */
 let activeTab = 'motion';
-let activeFab = 'fab-motion';
 
 function switchTab(tab, tabBtn, fabId) {
   activeTab = tab;
-
-  // Desktop tabs
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.classList.remove('active');
-    b.setAttribute('aria-selected', 'false');
-  });
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
   const activeTabBtn = document.getElementById('tab-' + tab + '-btn');
-  if (activeTabBtn) { activeTabBtn.classList.add('active'); activeTabBtn.setAttribute('aria-selected', 'true'); }
-  else if (tabBtn) { tabBtn.classList.add('active'); tabBtn.setAttribute('aria-selected', 'true'); }
-
-  // Panels
+  if (activeTabBtn) { activeTabBtn.classList.add('active'); activeTabBtn.setAttribute('aria-selected','true'); }
+  else if (tabBtn) { tabBtn.classList.add('active'); tabBtn.setAttribute('aria-selected','true'); }
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   const panel = document.getElementById('panel-' + tab);
   if (panel) panel.classList.add('active');
-
-  // Mobile fab
   if (fabId) {
     document.querySelectorAll('.fab-btn').forEach(b => b.classList.remove('active'));
     const fab = document.getElementById(fabId);
@@ -816,41 +810,41 @@ function switchTab(tab, tabBtn, fabId) {
 ============================================ */
 function updateClock() {
   const now = new Date();
-  const t = now.toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
-  const d = now.toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'});
+  const t = now.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  const d = now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
   const el = document.getElementById('header-clock');
   if (el) el.textContent = d + ' · ' + t;
-
   const ts = document.getElementById('cam-timestamp');
-  if (ts) ts.textContent = now.toLocaleString('en-US', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
+  if (ts) ts.textContent = now.toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+/* ============================================
+   SESSION EXPIRED HANDLER
+============================================ */
+function handleUnauth() {
+  showToast('auth','Session expired','Redirecting to login…');
+  setTimeout(() => { window.location.href = '/login'; }, 2000);
+}
 
 /* ============================================
    TOAST NOTIFICATIONS
 ============================================ */
 function showToast(type, title, msg) {
   const wrap = document.getElementById('toast-wrap');
+  if (!wrap) return;
   const icons = {
     motion: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/></svg>`,
-    auth: `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/></svg>`
+    auth:   `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z">`,
+    error:  `<svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H2.645c-1.73 0-2.813-1.874-1.948-3.374l7.703-13.498a2.25 2.25 0 0 1 3.9 0l7.703 13.498ZM12 15.75h.008v.008H12v-.008Z"/></svg>`
   };
   const toast = document.createElement('div');
   toast.className = 'toast';
-  toast.innerHTML = `
-    <div class="toast-icon ${type}">${icons[type]||icons.auth}</div>
-    <div class="toast-body">
-      <div class="toast-title">${title}</div>
-      <div class="toast-msg">${msg}</div>
-    </div>
-    <button class="toast-close" onclick="dismissToast(this.parentElement)" aria-label="Dismiss">
-      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
-    </button>`;
+  toast.innerHTML = `<div class="toast-icon ${type}">${icons[type]||icons.auth}</div><div class="toast-body"><div class="toast-title">${title}</div><div class="toast-msg">${msg}</div></div><button class="toast-close" onclick="dismissToast(this.parentElement)" aria-label="Dismiss"><svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg></button>`;
   wrap.prepend(toast);
-  // Keep max 3 toasts
-  const toasts = wrap.querySelectorAll('.toast');
-  if (toasts.length > 3) dismissToast(toasts[toasts.length - 1]);
+  const all = wrap.querySelectorAll('.toast');
+  if (all.length > 3) dismissToast(all[all.length-1]);
   setTimeout(() => dismissToast(toast), 5000);
 }
 
@@ -863,23 +857,17 @@ function dismissToast(el) {
 /* ============================================
    MOTION ALERT BANNER
 ============================================ */
-let lastMotionTime = null;
-
 function updateMotionAlert(latestTime) {
   const banner = document.getElementById('motion-alert');
   const timeEl = document.getElementById('motion-alert-time');
-  if (!latestTime) { banner.classList.remove('active'); return; }
+  if (!latestTime) { banner && banner.classList.remove('active'); return; }
   const age = (Date.now() - new Date(latestTime).getTime()) / 1000;
-  if (age < 30) {
-    banner.classList.add('active');
-    if (timeEl) timeEl.textContent = new Date(latestTime).toLocaleTimeString();
-  } else {
-    banner.classList.remove('active');
-  }
+  if (banner) banner.classList.toggle('active', age < 30);
+  if (timeEl && age < 30) timeEl.textContent = new Date(latestTime).toLocaleTimeString();
 }
 
 /* ============================================
-   SPINNING INDICATOR
+   REFRESH SPINNER
 ============================================ */
 function setRefreshing(active) {
   const el = document.getElementById('refresh-spin');
@@ -890,142 +878,151 @@ function setRefreshing(active) {
    EMPTY STATE
 ============================================ */
 function emptyState(icon, message) {
-  return `<div class="empty-state">
-    <svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${icon}</svg>
-    <p>${message}</p>
-  </div>`;
+  return `<div class="empty-state"><svg width="32" height="32" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">${icon}</svg><p>${message}</p></div>`;
+}
+
+/* ============================================
+   COUNT-UP ANIMATION
+============================================ */
+function countUp(el, target, duration=700) {
+  if (!el || isNaN(target)) return;
+  const start = performance.now();
+  const from = parseInt(el.textContent)||0;
+  const update = (now) => {
+    const p = Math.min((now-start)/duration, 1);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = Math.round(from + eased*(target-from));
+    if (p < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+
+/* ============================================
+   SMART LOG RENDERER (no flicker)
+============================================ */
+const seenMotion = new Set();
+const seenAuth = new Set();
+let motionFirstLoad = true;
+let authFirstLoad = true;
+let lastMotionTime = null;
+
+function prependLogItem(container, html, isNew) {
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  const el = div.firstElementChild;
+  if (isNew) {
+    el.style.animation = 'newItem .4s cubic-bezier(.16,1,.3,1) both';
+  }
+  container.prepend(el);
+  // Remove overflow (keep max 20)
+  const items = container.querySelectorAll('.log-item');
+  if (items.length > 20) items[items.length-1].remove();
 }
 
 /* ============================================
    MOTION LOGS
 ============================================ */
-let prevMotionId = null;
-let motionFirstLoad = true;
-
 async function loadMotionLogs() {
   setRefreshing(true);
   try {
     const res = await fetch('/logs');
+    if (res.status === 401) { handleUnauth(); return; }
     const data = await res.json();
     const container = document.getElementById('motion-container');
     if (!container) return;
 
-    // Badge count
     const countEl = document.getElementById('motion-count');
-    if (countEl) countEl.textContent = data.logs ? data.logs.length : 0;
-
     if (!data.logs || data.logs.length === 0) {
-      container.innerHTML = emptyState(
-        '<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>',
-        'No motion detected yet'
-      );
+      if (motionFirstLoad) container.innerHTML = emptyState('<path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z"/>','No motion detected yet');
       updateMotionAlert(null);
+      if (countEl) countEl.textContent = '0';
+      motionFirstLoad = false;
       return;
     }
 
-    const latest = data.logs[0];
+    if (countEl) countEl.textContent = data.logs.length;
+    const latestTime = data.logs[0].time;
+    updateMotionAlert(latestTime);
 
-    // Toast on new event (after first load)
-    if (!motionFirstLoad && prevMotionId && latest.time !== prevMotionId) {
-      showToast('motion', 'Motion Detected', 'New event captured · ' + new Date(latest.time).toLocaleTimeString());
+    // First load: render all at once
+    if (motionFirstLoad) {
+      container.innerHTML = '';
+      data.logs.forEach(log => {
+        seenMotion.add(log.time);
+        const div = document.createElement('div');
+        div.className = 'log-item';
+        div.innerHTML = `<img class="log-thumb" src="${log.image}" alt="Motion snapshot" loading="lazy"><div class="log-body"><div class="log-title"><span class="badge motion">MOTION</span></div><div class="log-time">${new Date(log.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</div></div>`;
+        container.appendChild(div);
+      });
+      motionFirstLoad = false;
+      return;
     }
-    prevMotionId = latest.time;
-    motionFirstLoad = false;
-    updateMotionAlert(latest.time);
 
-    container.innerHTML = data.logs.map(log => `
-      <div class="log-item">
-        <img class="log-thumb" src="${log.image}" alt="Motion snapshot" loading="lazy">
-        <div class="log-body">
-          <div class="log-title">
-            <span class="badge motion">MOTION</span>
-          </div>
-          <div class="log-time">${new Date(log.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</div>
-        </div>
-      </div>`).join('');
-  } catch(e) {
-    console.error('Motion logs error:', e);
-  } finally {
-    setRefreshing(false);
-  }
+    // Subsequent loads: only add NEW items
+    let hasNew = false;
+    data.logs.forEach(log => {
+      if (!seenMotion.has(log.time)) {
+        seenMotion.add(log.time);
+        hasNew = true;
+        prependLogItem(container, `<div class="log-item"><img class="log-thumb" src="${log.image}" alt="Motion snapshot" loading="lazy"><div class="log-body"><div class="log-title"><span class="badge motion">MOTION</span></div><div class="log-time">${new Date(log.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</div></div></div>`, true);
+      }
+    });
+    if (hasNew && lastMotionTime !== latestTime) {
+      lastMotionTime = latestTime;
+      showToast('motion','Motion Detected','New event · ' + new Date(latestTime).toLocaleTimeString());
+    }
+  } catch(e) { console.error('Motion logs error:', e); }
+  finally { setRefreshing(false); }
 }
 
 /* ============================================
    AUTH LOGS (admin only)
 ============================================ */
-let prevAuthTime = null;
-let authFirstLoad = true;
+const AUTH_ICONS = {
+  LOGIN_SUCCESS: {cls:'success', svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>'},
+  LOGIN_FAILED:  {cls:'failed',  svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>'},
+  LOGOUT:        {cls:'logout',  svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/>'}
+};
+
+function authLogHTML(log) {
+  const ic = AUTH_ICONS[log.type] || AUTH_ICONS.LOGOUT;
+  const badgeCls = log.type==='LOGIN_SUCCESS'?'success':log.type==='LOGIN_FAILED'?'failed':'logout';
+  return `<div class="log-item"><div class="log-icon ${ic.cls}" aria-hidden="true"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic.svg}</svg></div><div class="log-body"><div class="log-title"><span class="badge ${badgeCls}">${log.type.replace(/_/g,' ')}</span><span style="font-size:12px;color:var(--text-2);margin-left:4px">${log.username||''}</span></div><div class="log-ip" title="${log.ip||''}">${log.ip||''}</div><div class="log-time">${new Date(log.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</div></div></div>`;
+}
 
 async function loadLoginLogs() {
   const container = document.getElementById('login-container');
   if (!container) return;
   try {
     const res = await fetch('/login_logs');
+    if (res.status === 401) { handleUnauth(); return; }
     const data = await res.json();
-
     const countEl = document.getElementById('auth-count');
-    if (countEl) countEl.textContent = data.logs ? data.logs.length : 0;
 
     if (!data.logs || data.logs.length === 0) {
-      container.innerHTML = emptyState(
-        '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>',
-        'No auth events yet'
-      );
+      if (authFirstLoad) container.innerHTML = emptyState('<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>','No auth events yet');
+      if (countEl) countEl.textContent = '0';
+      authFirstLoad = false;
       return;
     }
 
-    const latest = data.logs[0];
-    if (!authFirstLoad && prevAuthTime && latest.time !== prevAuthTime) {
-      const isLogin = latest.type === 'LOGIN_SUCCESS';
-      showToast('auth', isLogin ? 'Login Success' : latest.type.replace(/_/g,' '),
-        (latest.username || '?') + ' · ' + (latest.ip || ''));
+    if (countEl) countEl.textContent = data.logs.length;
+
+    if (authFirstLoad) {
+      container.innerHTML = '';
+      data.logs.forEach(log => { seenAuth.add(log.time); const d=document.createElement('div'); d.innerHTML=authLogHTML(log); container.appendChild(d.firstElementChild); });
+      authFirstLoad = false;
+      return;
     }
-    prevAuthTime = latest.time;
-    authFirstLoad = false;
 
-    const icons = {
-      LOGIN_SUCCESS: {cls:'success', svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z"/>'},
-      LOGIN_FAILED:  {cls:'failed',  svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>'},
-      LOGOUT:        {cls:'logout',  svg:'<path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/>'}
-    };
-
-    container.innerHTML = data.logs.map(log => {
-      const ic = icons[log.type] || icons.LOGOUT;
-      const badgeCls = log.type === 'LOGIN_SUCCESS' ? 'success' : log.type === 'LOGIN_FAILED' ? 'failed' : 'logout';
-      const label = log.type.replace(/_/g, ' ');
-      return `<div class="log-item">
-        <div class="log-icon ${ic.cls}" aria-hidden="true">
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">${ic.svg}</svg>
-        </div>
-        <div class="log-body">
-          <div class="log-title">
-            <span class="badge ${badgeCls}">${label}</span>
-            <span style="font-size:12px;color:var(--text-2)">${log.username || ''}</span>
-          </div>
-          <div class="log-ip">${log.ip || ''}</div>
-          <div class="log-time">${new Date(log.time).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false})}</div>
-        </div>
-      </div>`;
-    }).join('');
-  } catch(e) {
-    console.error('Auth logs error:', e);
-  }
-}
-
-/* ============================================
-   COUNT-UP ANIMATION
-============================================ */
-function countUp(el, target, duration = 700) {
-  if (!el || isNaN(target)) return;
-  const start = performance.now();
-  const from = parseInt(el.textContent) || 0;
-  const update = (now) => {
-    const p = Math.min((now - start) / duration, 1);
-    const eased = 1 - Math.pow(1 - p, 3);
-    el.textContent = Math.round(from + eased * (target - from));
-    if (p < 1) requestAnimationFrame(update);
-  };
-  requestAnimationFrame(update);
+    data.logs.forEach(log => {
+      if (!seenAuth.has(log.time)) {
+        seenAuth.add(log.time);
+        prependLogItem(container, authLogHTML(log), true);
+        if (log.type !== 'LOGOUT') showToast('auth', log.type.replace(/_/g,' '), (log.username||'?') + ' · ' + (log.ip||''));
+      }
+    });
+  } catch(e) { console.error('Auth logs error:', e); }
 }
 
 /* ============================================
@@ -1034,15 +1031,13 @@ function countUp(el, target, duration = 700) {
 async function loadStats() {
   try {
     const res = await fetch('/stats');
+    if (res.status === 401) return;
     const d = await res.json();
-    const sm = document.getElementById('stat-motion');
-    const sf = document.getElementById('stat-failed');
-    const sa = document.getElementById('stat-auth');
+    countUp(document.getElementById('stat-motion'), d.motion_today??0);
+    countUp(document.getElementById('stat-failed'), d.failed_logins_today??0);
+    countUp(document.getElementById('stat-auth'), d.auth_events_today??0);
     const fc = document.getElementById('failed-count');
-    countUp(sm, d.motion_today ?? 0);
-    countUp(sf, d.failed_logins_today ?? 0);
-    countUp(sa, d.auth_events_today ?? 0);
-    if (fc) fc.textContent = d.failed_logins_today ?? '—';
+    if (fc) fc.textContent = d.failed_logins_today??'—';
   } catch(e) {}
 }
 
@@ -1056,11 +1051,9 @@ setInterval(loadMotionLogs, 2000);
 setInterval(loadLoginLogs, 2000);
 setInterval(loadStats, 10000);
 
-// Prefers reduced motion
+// Reduced motion support
 if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-  document.querySelectorAll('.pulse,.live-dot,.motion-alert-dot,.blink').forEach(el => {
-    el.style.animation = 'none';
-  });
+  document.querySelectorAll('.pulse,.live-dot,.motion-alert-dot').forEach(el => el.style.animation='none');
 }
 </script>
 </body>
